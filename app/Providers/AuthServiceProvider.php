@@ -11,14 +11,34 @@ class AuthServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        // Gate para asignar tickets
+        // Gates existentes
         Gate::define('asignar-ticket', function ($user) {
             return $user->esAdmin();
         });
 
-        // Gate para gestionar usuarios
         Gate::define('gestionar-usuarios', function ($user) {
             return $user->esStaff();
+        });
+        
+        // Nuevos gates para automatización
+        Gate::define('ver-monitoreo', function ($user) {
+            return $user->esStaff();
+        });
+        
+        Gate::define('gestionar-monitoreo', function ($user) {
+            return $user->esAdmin();
+        });
+        
+        Gate::define('gestionar-sedes', function ($user) {
+            return $user->esAdmin();
+        });
+        
+        Gate::define('ver-alarmas', function ($user) {
+            return $user->esStaff();
+        });
+        
+        Gate::define('gestionar-alarmas', function ($user) {
+            return $user->esAdmin();
         });
     }
 }

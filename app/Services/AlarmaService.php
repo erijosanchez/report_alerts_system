@@ -4,7 +4,7 @@ namespace App\Services;
 
 use App\Models\Alarma;
 use App\Models\Ticket;
-use App\Models\Sedes;
+use App\Models\Sede;
 use Illuminate\Support\Facades\Log;
 
 class AlarmaService
@@ -12,7 +12,7 @@ class AlarmaService
     /**
      * Crear alarma por caída de sistema
      */
-    public function crearAlarmaCaidaSistema(Ticket $ticket, Sedes $sede)
+    public function crearAlarmaCaidaSistema(Ticket $ticket, Sede $sede)
     {
         $alarma = Alarma::create([
             'ticket_id' => $ticket->id,

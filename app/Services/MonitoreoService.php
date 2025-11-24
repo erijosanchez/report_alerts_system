@@ -2,12 +2,10 @@
 
 namespace App\Services;
 
-use App\Models\Sedes;
+use App\Models\Sede;
 use App\Models\MonitoreoLog;
 use App\Models\Ticket;
 use Illuminate\Support\Facades\Log;
-use App\Services\AsignacionAutomaticaService;
-use App\Services\AlarmaService;
 
 class MonitoreoService
 {
@@ -16,7 +14,7 @@ class MonitoreoService
      */
     public function monitorearSedes()
     {
-        $sedes = Sedes::where('activa', true)->get();
+        $sedes = Sede::where('activa', true)->get();
 
         foreach ($sedes as $sede) {
             $this->monitorearSede($sede);
