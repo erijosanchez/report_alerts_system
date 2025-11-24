@@ -1,36 +1,58 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <meta name="csrf-token" content="{{ csrf_token() }}">
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@yield('title') - Sistema Tickets Trimax</title>
+</head>
+<body>
+    @auth
+    <header>
+        <h1>Sistema de Gestión de Tickets - Trimax</h1>
+        <nav>
+            <a href="{{ route('dashboard') }}">Dashboard</a> |
+            <a href="{{ route('tickets.index') }}">Tickets</a> |
+            @can('gestionar-usuarios')
+                <a href="{{ route('usuarios.index') }}">Usuarios</a> |
+            @endcan
+            <span>{{ auth()->user()->nombre }} ({{ auth()->user()->rol }})</span> |
+            <form action="{{ route('logout') }}" method="POST" style="display:inline">
+                @csrf
+                <button type="submit">Salir</button>
+            </form>
+        </nav>
+        <hr>
+    </header>
+    @endauth
 
-        <title>{{ config('app.name', 'Laravel') }}</title>
+    @if(session('success'))
+        <p style="color:green"><strong>{{ session('success') }}</strong></p>
+    @endif
 
-        <!-- Fonts -->
-        <link rel="preconnect" href="https://fonts.bunny.net">
-        <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
+    @if(session('error'))
+        <p style="color:red"><strong>{{ session('error') }}</strong></p>
+    @endif
 
-        <!-- Scripts -->
-        @vite(['resources/css/app.css', 'resources/js/app.js'])
-    </head>
-    <body class="font-sans antialiased">
-        <div class="min-h-screen bg-gray-100 dark:bg-gray-900">
-            @include('layouts.navigation')
-
-            <!-- Page Heading -->
-            @isset($header)
-                <header class="bg-white dark:bg-gray-800 shadow">
-                    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-                        {{ $header }}
-                    </div>
-                </header>
-            @endisset
-
-            <!-- Page Content -->
-            <main>
-                {{ $slot }}
-            </main>
+    @if ($errors->any())
+        <div style="color:red">
+            <ul>
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
         </div>
-    </body>
+    @endif
+
+    <main>
+        @yield('content')
+    </main>
+
+    @auth
+    <hr>
+    <footer>
+        <p>&copy; 2024 Laboratorio Óptico Trimax - Sistema de Gestión de Tickets</p>
+        <p>Desarrollado por Bach. Renato Ruiz y Bach. Frank Sánchez</p>
+    </footer>
+    @endauth
+</body>
 </html>
