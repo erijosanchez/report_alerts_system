@@ -93,7 +93,7 @@ class TicketController extends Controller
 
     public function asignar(Request $request, $id)
     {
-        $this->authorize('asignar-ticket');
+        //$this->authorize('asignar-ticket');
 
         $ticket = Ticket::findOrFail($id);
         $ticket->asignarTecnico($request->tecnico_id);

@@ -9,7 +9,7 @@ class AlarmaController extends Controller
 {
     public function index()
     {
-        $this->authorize('ver-alarmas');
+        //$this->authorize('ver-alarmas');
         
         $alarmas = Alarma::with(['ticket.sede', 'ticket.tecnico'])
             ->orderBy('created_at', 'desc')
@@ -26,7 +26,7 @@ class AlarmaController extends Controller
     
     public function desactivar($id)
     {
-        $this->authorize('gestionar-alarmas');
+        //$this->authorize('gestionar-alarmas');
         
         $alarma = Alarma::findOrFail($id);
         $alarma->update(['activa' => false]);

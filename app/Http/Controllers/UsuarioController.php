@@ -10,14 +10,14 @@ class UsuarioController extends Controller
 {
     public function index()
     {
-        $this->authorize('gestionar-usuarios');
+        //$this->authorize('gestionar-usuarios');
         $usuarios = Usuario::orderBy('nombre')->get();
         return view('usuarios.index', compact('usuarios'));
     }
 
     public function store(Request $request)
     {
-        $this->authorize('gestionar-usuarios');
+        //$this->authorize('gestionar-usuarios');
         
         $validated = $request->validate([
             'nombre' => 'required|max:100',
