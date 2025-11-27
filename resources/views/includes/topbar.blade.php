@@ -27,10 +27,10 @@
                         <i class="bi bi-download"></i>
                         <span class="d-sm-inline d-none">Exportar</span>
                     </button>
-                    <button class="btn-primary">
+                    <a href="{{ route('tickets.create') }}" class="btn-primary">
                         <i class="bi bi-plus-circle"></i>
                         <span class="d-sm-inline d-none">Nuevo Ticket</span>
-                    </button>
+                    </a>
                 </div>
             </div>
         </div>
