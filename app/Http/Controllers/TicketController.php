@@ -29,6 +29,22 @@ class TicketController extends Controller
             $query->where('estado', $request->estado);
         }
 
+        if ($request->filled('prioridad_id')) {
+            $query->where('prioridad_id', $request->prioridad_id);
+        }
+
+        if ($request->filled('tecnico_id')) {
+            if ($request->tecnico_id === 'sin_asignar') {
+                $query->whereNull('tecnico_id');
+            } else {
+                $query->where('tecnico_id', $request->tecnico_id);
+            }
+        }
+
+        if ($request->filled('origen')) {
+            $query->where('origen', $request->origen);
+        }
+
         if ($request->filled('busqueda')) {
             $query->where(function ($q) use ($request) {
                 $q->where('numero_ticket', 'like', '%' . $request->busqueda . '%')
@@ -38,7 +54,29 @@ class TicketController extends Controller
 
         $tickets = $query->latest('fecha_apertura')->paginate(10);
 
-        return view('tickets.index', compact('tickets'));
+        // Calcular estadísticas para la barra superior
+        $statsQuery = Ticket::query();
+        if ($user->esCliente()) {
+            $statsQuery->where('usuario_id', $user->id);
+        } elseif ($user->esTecnico()) {
+            $statsQuery->where('tecnico_id', $user->id);
+        }
+
+        $stats = [
+            'total' => $statsQuery->count(),
+            'abiertos' => (clone $statsQuery)->where('estado', 'abierto')->count(),
+            'en_proceso' => (clone $statsQuery)->where('estado', 'en_proceso')->count(),
+            'resueltos' => (clone $statsQuery)->where('estado', 'resuelto')->count(),
+            'criticos' => (clone $statsQuery)->whereHas('prioridad', function($q) {
+                $q->where('nombre', 'urgente')->orWhere('nombre', 'alta');
+            })->whereIn('estado', ['abierto', 'en_proceso'])->count(),
+        ];
+
+        // Obtener datos para los filtros
+        $prioridades = Prioridad::ordenadoPorNivel()->get();
+        $tecnicos = Usuario::where('rol', 'tecnico')->where('estado', true)->get();
+
+        return view('tickets.index', compact('tickets', 'stats', 'prioridades', 'tecnicos'));
     }
 
     public function create()
