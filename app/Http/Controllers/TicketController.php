@@ -15,7 +15,7 @@ class TicketController extends Controller
     public function index(Request $request)
     {
         $user = auth()->user();
-        $query = Ticket::with(['usuario', 'tecnico', 'categoria', 'prioridad']);
+        $query = Ticket::with(['usuario', 'tecnico', 'categoria', 'prioridad', 'comentarios']);
 
         // Filtrar según rol
         if ($user->esCliente()) {
@@ -67,23 +67,17 @@ class TicketController extends Controller
             'abiertos' => (clone $statsQuery)->where('estado', 'abierto')->count(),
             'en_proceso' => (clone $statsQuery)->where('estado', 'en_proceso')->count(),
             'resueltos' => (clone $statsQuery)->where('estado', 'resuelto')->count(),
-            'criticos' => (clone $statsQuery)->whereHas('prioridad', function($q) {
+            'criticos' => (clone $statsQuery)->whereHas('prioridad', function ($q) {
                 $q->where('nombre', 'urgente')->orWhere('nombre', 'alta');
             })->whereIn('estado', ['abierto', 'en_proceso'])->count(),
         ];
 
-        // Obtener datos para los filtros
+        // Obtener datos para los filtros y modales
         $prioridades = Prioridad::ordenadoPorNivel()->get();
         $tecnicos = Usuario::where('rol', 'tecnico')->where('estado', true)->get();
-
-        return view('tickets.index', compact('tickets', 'stats', 'prioridades', 'tecnicos'));
-    }
-
-    public function create()
-    {
         $categorias = Categoria::activas()->get();
-        $prioridades = Prioridad::ordenadoPorNivel()->get();
-        return view('tickets.create', compact('categorias', 'prioridades'));
+
+        return view('tickets.index', compact('tickets', 'stats', 'prioridades', 'tecnicos', 'categorias'));
     }
 
     public function store(Request $request)
@@ -97,44 +91,26 @@ class TicketController extends Controller
 
         $validated['usuario_id'] = auth()->id();
         $validated['fecha_apertura'] = now();
+        $validated['estado'] = 'abierto';
+        $validated['origen'] = 'manual';
 
         $ticket = Ticket::create($validated);
 
-        return redirect()->route('tickets.show', $ticket->id)
-            ->with('success', 'Ticket creado exitosamente');
-    }
-
-    public function show($id)
-    {
-        $ticket = Ticket::with([
-            'usuario',
-            'tecnico',
-            'categoria',
-            'prioridad',
-            'comentarios.usuario'
-        ])->findOrFail($id);
-
-        $user = auth()->user();
-
-        // Verificar permisos
-        if ($user->esCliente() && $ticket->usuario_id != $user->id) {
-            abort(403, 'No tienes permiso para ver este ticket');
-        }
-
-        $tecnicos = [];
-        if ($user->esAdmin()) {
-            $tecnicos = Usuario::where('rol', 'tecnico')->where('estado', true)->get();
-        }
-
-        return view('tickets.show', compact('ticket', 'tecnicos'));
+        return back()->with('success', 'Ticket creado exitosamente - ' . $ticket->numero_ticket);
     }
 
     public function asignar(Request $request, $id)
     {
-        //$this->authorize('asignar-ticket');
-
         $ticket = Ticket::findOrFail($id);
-        $ticket->asignarTecnico($request->tecnico_id);
+
+        $validated = $request->validate([
+            'tecnico_id' => 'required|exists:usuarios,id'
+        ]);
+
+        $ticket->update([
+            'tecnico_id' => $validated['tecnico_id'],
+            'estado' => 'en_proceso'
+        ]);
 
         return back()->with('success', 'Ticket asignado correctamente');
     }
@@ -148,7 +124,19 @@ class TicketController extends Controller
             abort(403);
         }
 
-        $ticket->cambiarEstado($request->estado);
+        $validated = $request->validate([
+            'estado' => 'required|in:abierto,en_proceso,pendiente,resuelto,cerrado'
+        ]);
+
+        $ticket->update(['estado' => $validated['estado']]);
+
+        // Si se resuelve, calcular tiempo de resolución
+        if ($validated['estado'] === 'resuelto' && !$ticket->fecha_cierre) {
+            $ticket->update([
+                'fecha_cierre' => now(),
+                'tiempo_resolucion_minutos' => round($ticket->fecha_apertura->diffInMinutes(now())) // ← AQUÍ EL CAMBIO
+            ]);
+        }
 
         return back()->with('success', 'Estado actualizado');
     }

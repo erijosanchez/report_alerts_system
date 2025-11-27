@@ -3,6 +3,25 @@
 @section('title', 'Tickets')
 
 @section('content')
+    <!-- MENSAJES -->
+    @if(session('success'))
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle-fill"></i> {{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    @endif
+
+    @if($errors->any())
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle-fill"></i> 
+            <ul class="mb-0">
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    @endif
 
     <!-- STATS BAR -->
     <div class="stats-bar">
@@ -36,7 +55,12 @@
 
     <!-- FILTERS -->
     <div class="filters-card">
-        <h5><i class="bi bi-funnel"></i> Filtros</h5>
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5><i class="bi bi-funnel"></i> Filtros</h5>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#crearTicketModal">
+                <i class="bi bi-plus-circle"></i> Nuevo Ticket
+            </button>
+        </div>
         <form method="GET" action="{{ route('tickets.index') }}">
             <div class="row g-3">
                 <div class="col-12 col-md-6 col-lg-2">
@@ -191,12 +215,12 @@
 
                 <div class="ticket-footer">
                     <div class="ticket-actions">
-                        <a href="{{ route('tickets.show', $ticket->id) }}" class="btn-action btn-action-primary">
+                        <button class="btn-action btn-action-primary" data-bs-toggle="modal" data-bs-target="#detalleTicketModal{{ $ticket->id }}">
                             <i class="bi bi-eye"></i> Ver Detalle
-                        </a>
+                        </button>
                         
                         @if(auth()->user()->esStaff() && $ticket->estado !== 'resuelto' && $ticket->estado !== 'cerrado')
-                            <form action="{{ route('tickets.cambiar-estado', $ticket->id) }}" method="POST" class="d-inline">
+                            <form action="{{ route('tickets.estado', $ticket->id) }}" method="POST" class="d-inline">
                                 @csrf
                                 @method('PATCH')
                                 <input type="hidden" name="estado" value="resuelto">
@@ -206,15 +230,15 @@
                             </form>
                         @endif
 
-                        @if(auth()->user()->esAdmin() && !$ticket->tecnico)
+                        @if(auth()->user()->esAdmin() && !$ticket->tecnico && $ticket->estado !== 'resuelto' && $ticket->estado !== 'cerrado')
                             <button class="btn-action btn-action-warning" data-bs-toggle="modal" data-bs-target="#asignarModal{{ $ticket->id }}">
                                 <i class="bi bi-person-plus"></i> Asignar
                             </button>
                         @endif
 
-                        @if($ticket->comentarios_count > 0)
-                            <button class="btn-action btn-action-outline">
-                                <i class="bi bi-chat-dots"></i> {{ $ticket->comentarios_count }}
+                        @if($ticket->comentarios->count() > 0)
+                            <button class="btn-action btn-action-outline" data-bs-toggle="modal" data-bs-target="#detalleTicketModal{{ $ticket->id }}">
+                                <i class="bi bi-chat-dots"></i> {{ $ticket->comentarios->count() }}
                             </button>
                         @endif
                     </div>
@@ -228,13 +252,126 @@
                     @endif
                 </div>
             </div>
+
+            <!-- MODAL DETALLE TICKET -->
+            <div class="modal fade" id="detalleTicketModal{{ $ticket->id }}" tabindex="-1">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">
+                                <i class="bi bi-ticket-detailed"></i> {{ $ticket->numero_ticket }} - {{ $ticket->titulo }}
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <!-- Info del Ticket -->
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-6">
+                                    <p class="mb-1"><strong>Estado:</strong></p>
+                                    <span class="badge" {!! $estadoColor !!}>{{ ucfirst(str_replace('_', ' ', $ticket->estado)) }}</span>
+                                </div>
+                                <div class="col-md-6">
+                                    <p class="mb-1"><strong>Prioridad:</strong></p>
+                                    <span class="badge bg-{{ $prioridadColor['badge'] }}">{{ ucfirst($ticket->prioridad->nombre) }}</span>
+                                </div>
+                                <div class="col-md-6">
+                                    <p class="mb-1"><strong>Cliente:</strong></p>
+                                    <p>{{ $ticket->usuario->nombre }} {{ $ticket->usuario->apellido }}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p class="mb-1"><strong>Técnico Asignado:</strong></p>
+                                    <p>{{ $ticket->tecnico ? $ticket->tecnico->nombre : 'Sin asignar' }}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p class="mb-1"><strong>Categoría:</strong></p>
+                                    <p>{{ $ticket->categoria->nombre ?? '-' }}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p class="mb-1"><strong>Fecha Apertura:</strong></p>
+                                    <p>{{ $ticket->fecha_apertura->format('d/m/Y H:i') }}</p>
+                                </div>
+                            </div>
+
+                            <!-- Descripción -->
+                            <div class="mb-4">
+                                <h6><i class="bi bi-file-text"></i> Descripción</h6>
+                                <div class="p-3" style="background: #f8f9fa; border-radius: 8px;">
+                                    {{ $ticket->descripcion }}
+                                </div>
+                            </div>
+
+                            <!-- Comentarios -->
+                            <div class="mb-3">
+                                <h6><i class="bi bi-chat-dots"></i> Comentarios ({{ $ticket->comentarios->count() }})</h6>
+                                <div style="max-height: 300px; overflow-y: auto;">
+                                    @forelse($ticket->comentarios as $comentario)
+                                        <div class="p-3 mb-2" style="background: #f8f9fa; border-radius: 8px;">
+                                            <div class="d-flex justify-content-between mb-2">
+                                                <strong>{{ $comentario->usuario->nombre }}</strong>
+                                                <small class="text-muted">{{ $comentario->created_at->diffForHumans() }}</small>
+                                            </div>
+                                            <p class="mb-0">{{ $comentario->comentario }}</p>
+                                        </div>
+                                    @empty
+                                        <p class="text-muted">No hay comentarios aún</p>
+                                    @endforelse
+                                </div>
+                            </div>
+
+                            <!-- Agregar Comentario -->
+                            <form action="{{ route('tickets.comentarios', $ticket->id) }}" method="POST">
+                                @csrf
+                                <div class="mb-3">
+                                    <label class="form-label">Agregar Comentario</label>
+                                    <textarea name="comentario" class="form-control" rows="3" placeholder="Escribe tu comentario..." required></textarea>
+                                </div>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-send"></i> Enviar Comentario
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MODAL ASIGNAR TÉCNICO -->
+            @if(auth()->user()->esAdmin())
+                <div class="modal fade" id="asignarModal{{ $ticket->id }}" tabindex="-1">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title"><i class="bi bi-person-plus"></i> Asignar Técnico</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <form action="{{ route('tickets.asignar', $ticket->id) }}" method="POST">
+                                @csrf
+                                <div class="modal-body">
+                                    <label class="form-label">Seleccionar Técnico *</label>
+                                    <select name="tecnico_id" class="form-select" required>
+                                        <option value="">Seleccionar...</option>
+                                        @foreach($tecnicos as $tecnico)
+                                            <option value="{{ $tecnico->id }}">{{ $tecnico->nombre }} {{ $tecnico->apellido }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="bi bi-check-circle"></i> Asignar
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            @endif
         @empty
             <div class="col-12 text-center py-5">
                 <i class="bi bi-inbox" style="font-size: 3rem; color: var(--color-6);"></i>
                 <p class="mt-3 text-muted">No se encontraron tickets</p>
-                <a href="{{ route('tickets.create') }}" class="btn btn-primary mt-2">
+                <button class="btn btn-primary mt-2" data-bs-toggle="modal" data-bs-target="#crearTicketModal">
                     <i class="bi bi-plus-circle"></i> Crear Nuevo Ticket
-                </a>
+                </button>
             </div>
         @endforelse
     </div>
@@ -245,8 +382,58 @@
             <span class="pagination-info">
                 Mostrando {{ $tickets->firstItem() }} - {{ $tickets->lastItem() }} de {{ $tickets->total() }} tickets
             </span>
-            {{ $tickets->links() }}
+            {{ $tickets->appends(request()->query())->links() }}
         </div>
     @endif
 
+    <!-- MODAL CREAR TICKET -->
+    <div class="modal fade" id="crearTicketModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-plus-circle"></i> Nuevo Ticket</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form action="{{ route('tickets.store') }}" method="POST">
+                    @csrf
+                    <div class="modal-body">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label">Título *</label>
+                                <input type="text" name="titulo" class="form-control" placeholder="Ej: Problema con impresora" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Categoría *</label>
+                                <select name="categoria_id" class="form-select" required>
+                                    <option value="">Seleccionar...</option>
+                                    @foreach($categorias as $categoria)
+                                        <option value="{{ $categoria->id }}">{{ $categoria->nombre }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Prioridad *</label>
+                                <select name="prioridad_id" class="form-select" required>
+                                    <option value="">Seleccionar...</option>
+                                    @foreach($prioridades as $prioridad)
+                                        <option value="{{ $prioridad->id }}">{{ $prioridad->nombre }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Descripción *</label>
+                                <textarea name="descripcion" class="form-control" rows="5" placeholder="Describe el problema con el mayor detalle posible..." required></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i> Crear Ticket
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 @endsection
