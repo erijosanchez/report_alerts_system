@@ -14,7 +14,7 @@
                         <div class="metric-value" data-target="{{ $stats['total'] }}" id="m1">0</div>
                         <div class="metric-foot">
                             <span class="pill positive">
-                                <i class="bi bi-arrow-up"></i> +12%
+                                <i class="bi bi-arrow-up"></i> +{{ $stats['variacion_total'] ?? 0 }}%
                             </span>
                         </div>
                     </div>
@@ -33,8 +33,9 @@
                         <div class="metric-label">Abiertos</div>
                         <div class="metric-value" data-target="{{ $stats['abiertos'] }}" id="m2">0</div>
                         <div class="metric-foot">
-                            <span class="pill negative">
-                                <i class="bi bi-arrow-down"></i> -5%
+                            <span class="pill {{ ($stats['variacion_abiertos'] ?? 0) >= 0 ? 'negative' : 'positive' }}">
+                                <i class="bi bi-arrow-{{ ($stats['variacion_abiertos'] ?? 0) >= 0 ? 'up' : 'down' }}"></i> 
+                                {{ ($stats['variacion_abiertos'] ?? 0) >= 0 ? '+' : '' }}{{ $stats['variacion_abiertos'] ?? 0 }}%
                             </span>
                         </div>
                     </div>
@@ -53,8 +54,9 @@
                         <div class="metric-label">En Proceso</div>
                         <div class="metric-value" data-target="{{ $stats['en_proceso'] }}" id="m3">0</div>
                         <div class="metric-foot">
-                            <span class="pill positive">
-                                <i class="bi bi-arrow-up"></i> +8%
+                            <span class="pill {{ ($stats['variacion_proceso'] ?? 0) >= 0 ? 'positive' : 'negative' }}">
+                                <i class="bi bi-arrow-{{ ($stats['variacion_proceso'] ?? 0) >= 0 ? 'up' : 'down' }}"></i> 
+                                {{ ($stats['variacion_proceso'] ?? 0) >= 0 ? '+' : '' }}{{ $stats['variacion_proceso'] ?? 0 }}%
                             </span>
                         </div>
                     </div>
@@ -73,8 +75,9 @@
                         <div class="metric-label">Resueltos</div>
                         <div class="metric-value" data-target="{{ $stats['resueltos'] }}" id="m4">0</div>
                         <div class="metric-foot">
-                            <span class="pill positive">
-                                <i class="bi bi-arrow-up"></i> +15%
+                            <span class="pill {{ ($stats['variacion_resueltos'] ?? 0) >= 0 ? 'positive' : 'negative' }}">
+                                <i class="bi bi-arrow-{{ ($stats['variacion_resueltos'] ?? 0) >= 0 ? 'up' : 'down' }}"></i> 
+                                {{ ($stats['variacion_resueltos'] ?? 0) >= 0 ? '+' : '' }}{{ $stats['variacion_resueltos'] ?? 0 }}%
                             </span>
                         </div>
                     </div>
@@ -94,8 +97,9 @@
                 <div style="font-size:20px;font-weight:800;color:var(--color-10);margin-top:8px;">
                     {{ round($stats['tiempo_respuesta_promedio'] ?? 0) }} minutos</div>
                 <div class="mt-2 muted">
-                    <i class="bi bi-arrow-down" style="color:#0b944f;margin-right:8px"></i>
-                    -15min
+                    <i class="bi bi-arrow-{{ ($stats['variacion_tiempo_respuesta'] ?? 0) <= 0 ? 'down' : 'up' }}" 
+                       style="color:{{ ($stats['variacion_tiempo_respuesta'] ?? 0) <= 0 ? '#0b944f' : '#dc2626' }};margin-right:8px"></i>
+                    {{ ($stats['variacion_tiempo_respuesta'] ?? 0) > 0 ? '+' : '' }}{{ $stats['variacion_tiempo_respuesta'] ?? 0 }}min
                 </div>
             </div>
         </div>
@@ -106,8 +110,9 @@
                 <div style="font-size:20px;font-weight:800;color:var(--color-10);margin-top:8px;">
                     {{ round($stats['tiempo_resolucion_promedio'] ?? 0) }} minutos</div>
                 <div class="mt-2 muted">
-                    <i class="bi bi-arrow-down" style="color:#0b944f;margin-right:8px"></i>
-                    -30min
+                    <i class="bi bi-arrow-{{ ($stats['variacion_tiempo_resolucion'] ?? 0) <= 0 ? 'down' : 'up' }}" 
+                       style="color:{{ ($stats['variacion_tiempo_resolucion'] ?? 0) <= 0 ? '#0b944f' : '#dc2626' }};margin-right:8px"></i>
+                    {{ ($stats['variacion_tiempo_resolucion'] ?? 0) > 0 ? '+' : '' }}{{ $stats['variacion_tiempo_resolucion'] ?? 0 }}min
                 </div>
             </div>
         </div>
@@ -118,8 +123,9 @@
                 <div style="font-size:20px;font-weight:800;color:var(--color-10);margin-top:8px;">
                     {{ number_format($stats['calificacion_promedio'] ?? 0, 1) }} / 5</div>
                 <div class="mt-2 muted">
-                    <i class="bi bi-arrow-up" style="color:#d97706;margin-right:8px"></i>
-                    +0.2
+                    <i class="bi bi-arrow-{{ ($stats['variacion_calificacion'] ?? 0) >= 0 ? 'up' : 'down' }}" 
+                       style="color:{{ ($stats['variacion_calificacion'] ?? 0) >= 0 ? '#0b944f' : '#dc2626' }};margin-right:8px"></i>
+                    {{ ($stats['variacion_calificacion'] ?? 0) >= 0 ? '+' : '' }}{{ number_format($stats['variacion_calificacion'] ?? 0, 1) }}
                 </div>
             </div>
         </div>
@@ -164,18 +170,28 @@
                                 <td><strong>{{ $ticket->titulo }}</strong></td>
                                 <td>{{ $ticket->usuario->nombre }} {{ $ticket->usuario->apellido }}</td>
                                 <td>
+                                    @php
+                                        $prioridadColors = [
+                                            'baja' => ['dot' => '#10b981', 'badge' => 'success'],
+                                            'media' => ['dot' => '#f59e0b', 'badge' => 'warning'],
+                                            'alta' => ['dot' => '#ef4444', 'badge' => 'danger'],
+                                            'urgente' => ['dot' => '#dc2626', 'badge' => 'danger']
+                                        ];
+                                        $prioridadNombre = strtolower($ticket->prioridad->nombre);
+                                        $color = $prioridadColors[$prioridadNombre] ?? ['dot' => '#6b7280', 'badge' => 'secondary'];
+                                    @endphp
                                     <span style="display:inline-flex;align-items:center;">
-                                        <span class="priority-dot" style="background:#ef4444"></span>
-                                        <span class="bg-danger badge">{{ $ticket->prioridad->nombre }}</span>
+                                        <span class="priority-dot" style="background:{{ $color['dot'] }}"></span>
+                                        <span class="badge bg-{{ $color['badge'] }}">{{ $ticket->prioridad->nombre }}</span>
                                     </span>
                                 </td>
-                                <td><span class="bg-warning text-dark badge">{{ $ticket->estado }}</span></td>
+                                <td><span class="badge bg-warning text-dark">{{ $ticket->estado }}</span></td>
                                 @if (auth()->user()->esStaff())
                                     <td>{{ $ticket->tecnico ? $ticket->tecnico->nombre : 'Sin asignar' }}</td>
                                 @endif
                                 <td>{{ $ticket->fecha_apertura->format('d/m/Y H:i') }}</td>
                                 <td class="table-actions">
-                                    <a href="{{ route('tickets.show', $ticket->id) }}" class="btn-outline-primary btn btn-sm" title="Ver">
+                                    <a href="{{ route('tickets.show', $ticket->id) }}" class="btn btn-sm btn-outline-primary" title="Ver">
                                         <i class="bi bi-eye"></i>
                                     </a>
                                 </td>
