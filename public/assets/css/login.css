@@ -1,0 +1,629 @@
+/* ==========================================================
+           PALETA DE COLORES
+        ========================================================== */
+:root {
+    --color-1: #E6F5FF;
+    --color-2: #B8E4FF;
+    --color-3: #8AD2FF;
+    --color-4: #5CC0FF;
+    --color-5: #2EAFFF;
+    --color-6: #009DFF;
+    --color-7: #0081D1;
+    --color-8: #0065A3;
+    --color-9: #004875;
+    --color-10: #003A5D;
+    --color-11: #00101A;
+
+    --shadow-1: rgb(0 58 93);
+    --shadow-2: rgb(5 53 84);
+    --shadow-3: rgb(9 48 76);
+    --shadow-4: rgb(12 43 68);
+    --shadow-5: rgb(13 39 60);
+    --shadow-6: rgb(14 34 52);
+    --shadow-7: rgb(14 30 44);
+    --shadow-8: rgb(14 25 36);
+    --shadow-9: rgb(12 21 29);
+    --shadow-10: rgb(8 15 22);
+    --shadow-11: rgb(4 8 13);
+
+    --tinte-1: #E8EBEF;
+    --tinte-2: #D1D8E0;
+    --tinte-3: #BBC5D0;
+    --tinte-4: #A5B2C1;
+    --tinte-5: #8F9FB2;
+    --tinte-6: #7A8DA4;
+    --tinte-7: #657C95;
+    --tinte-8: #506A87;
+    --tinte-9: #3A5A79;
+    --tinte-10: #234A6B;
+    --tinte-11: #003A5D;
+}
+
+/* ==========================================================
+           ESTILO GLOBAL
+        ========================================================== */
+* {
+    box-sizing: border-box;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+    background: linear-gradient(180deg, var(--color-9) 0%, var(--color-11) 100%);
+    min-height: 100vh;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: "Inter", "Segoe UI", Tahoma, sans-serif;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Patrón de fondo decorativo */
+body::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -20%;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(0, 157, 255, 0.1) 0%, transparent 70%);
+    border-radius: 50%;
+    animation: float 20s ease-in-out infinite;
+}
+
+body::after {
+    content: '';
+    position: absolute;
+    bottom: -30%;
+    left: -10%;
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(0, 72, 117, 0.15) 0%, transparent 70%);
+    border-radius: 50%;
+    animation: float 25s ease-in-out infinite reverse;
+}
+
+@keyframes float {
+
+    0%,
+    100% {
+        transform: translate(0, 0) scale(1);
+    }
+
+    50% {
+        transform: translate(30px, 30px) scale(1.1);
+    }
+}
+
+.login-container {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 480px;
+    padding: 25px;
+}
+
+/* ==========================================================
+           ÁREA DEL LOGO
+        ========================================================== */
+.brand-area {
+    text-align: center;
+    margin-bottom: 40px;
+    animation: fadeInDown 0.8s ease;
+}
+
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.logo-wrapper {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 90px;
+    height: 90px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
+    border-radius: 20px;
+    margin-bottom: 20px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.logo-icon {
+    font-size: 48px;
+    color: var(--color-3);
+    filter: drop-shadow(0 4px 12px rgba(138, 210, 255, 0.5));
+}
+
+.brand-title {
+    color: white;
+    font-weight: 700;
+    font-size: 28px;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+.brand-subtitle {
+    color: var(--color-2);
+    font-size: 14px;
+    font-weight: 500;
+    opacity: 0.9;
+}
+
+/* ==========================================================
+           CARD DEL LOGIN
+        ========================================================== */
+.login-card {
+    background: white;
+    padding: 42px 38px;
+    border-radius: 20px;
+    box-shadow:
+        0 20px 60px rgba(0, 0, 0, 0.3),
+        0 0 1px rgba(255, 255, 255, 0.1) inset;
+    animation: fadeInUp 0.8s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Decoración superior de la card */
+.login-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--color-6), var(--color-8), var(--color-6));
+    background-size: 200% 100%;
+    animation: shimmer 3s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+
+    0%,
+    100% {
+        background-position: 0% 50%;
+    }
+
+    50% {
+        background-position: 100% 50%;
+    }
+}
+
+.login-title {
+    font-size: 24px;
+    font-weight: 700;
+    text-align: center;
+    color: var(--color-10);
+    margin-bottom: 30px;
+    position: relative;
+    padding-bottom: 15px;
+}
+
+.login-title::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, var(--color-6), transparent);
+    border-radius: 2px;
+}
+
+/* ==========================================================
+           FORMULARIO
+        ========================================================== */
+.form-group-custom {
+    margin-bottom: 24px;
+    position: relative;
+}
+
+.custom-label {
+    font-weight: 600;
+    color: var(--color-10);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.custom-label i {
+    color: var(--color-6);
+    font-size: 16px;
+}
+
+.input-wrapper {
+    position: relative;
+}
+
+.custom-input {
+    width: 100%;
+    padding: 14px 16px 14px 45px;
+    border-radius: 12px;
+    border: 2px solid var(--tinte-2);
+    background: var(--tinte-1);
+    font-size: 15px;
+    transition: all 0.3s ease;
+    font-weight: 500;
+    color: var(--color-10);
+}
+
+.custom-input:focus {
+    outline: none;
+    background: white;
+    border-color: var(--color-6);
+    box-shadow: 0 0 0 4px rgba(0, 157, 255, 0.1);
+    transform: translateY(-2px);
+}
+
+.custom-input::placeholder {
+    color: var(--tinte-6);
+}
+
+.input-icon {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--color-7);
+    font-size: 18px;
+    pointer-events: none;
+}
+
+/* ==========================================================
+           OPCIONES ADICIONALES
+        ========================================================== */
+.small-options {
+    margin-bottom: 28px;
+}
+
+.form-check-input {
+    border-color: var(--tinte-4);
+    cursor: pointer;
+}
+
+.form-check-input:checked {
+    background-color: var(--color-6);
+    border-color: var(--color-6);
+}
+
+.form-check-input:focus {
+    box-shadow: 0 0 0 3px rgba(0, 157, 255, 0.15);
+}
+
+.form-check-label {
+    color: var(--tinte-8);
+    font-weight: 500;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.forgot-link {
+    color: var(--color-7);
+    font-size: 14px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.forgot-link:hover {
+    color: var(--color-6);
+    text-decoration: underline;
+}
+
+/* ==========================================================
+           BOTÓN PRINCIPAL
+        ========================================================== */
+.btn-login {
+    background: linear-gradient(135deg, var(--color-6), var(--color-8));
+    border: none;
+    color: white;
+    padding: 15px;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 16px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 20px rgba(0, 72, 117, 0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-login::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.btn-login:hover::before {
+    width: 300px;
+    height: 300px;
+}
+
+.btn-login:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 30px rgba(0, 72, 117, 0.4);
+    background: linear-gradient(135deg, var(--color-7), var(--color-9));
+}
+
+.btn-login:active {
+    transform: translateY(-1px);
+}
+
+.btn-login i {
+    margin-right: 8px;
+    position: relative;
+    z-index: 1;
+}
+
+.btn-login span {
+    position: relative;
+    z-index: 1;
+}
+
+/* ==========================================================
+           DIVISOR
+        ========================================================== */
+.divider {
+    display: flex;
+    align-items: center;
+    margin: 25px 0;
+    color: var(--tinte-6);
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.divider::before,
+.divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--tinte-2);
+}
+
+.divider span {
+    padding: 0 15px;
+}
+
+/* ==========================================================
+           BOTONES SOCIALES (OPCIONAL)
+        ========================================================== */
+.social-login {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 20px;
+}
+
+.btn-social {
+    padding: 12px;
+    border-radius: 10px;
+    border: 2px solid var(--tinte-2);
+    background: white;
+    font-weight: 600;
+    font-size: 14px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.btn-social:hover {
+    border-color: var(--color-6);
+    background: var(--color-1);
+    transform: translateY(-2px);
+}
+
+/* ==========================================================
+           FOOTER
+        ========================================================== */
+.footer-text {
+    text-align: center;
+    color: var(--color-2);
+    font-size: 13px;
+    margin-top: 30px;
+    opacity: 0.9;
+    font-weight: 500;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.footer-text strong {
+    color: white;
+    font-weight: 600;
+}
+
+/* ==========================================================
+           ALERTA DE ERROR (OPCIONAL)
+        ========================================================== */
+.alert-error {
+    background: #fff1f1;
+    border: 1px solid #fecaca;
+    color: #dc2626;
+    padding: 12px 16px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    display: none;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.alert-error i {
+    font-size: 18px;
+}
+
+/* ==========================================================
+           RESPONSIVE DESIGN
+        ========================================================== */
+
+/* Tablets */
+@media (max-width: 768px) {
+    .login-card {
+        padding: 35px 30px;
+    }
+
+    .logo-wrapper {
+        width: 80px;
+        height: 80px;
+    }
+
+    .logo-icon {
+        font-size: 42px;
+    }
+
+    .brand-title {
+        font-size: 26px;
+    }
+}
+
+/* Móviles */
+@media (max-width: 576px) {
+    .login-container {
+        max-width: 95%;
+        padding: 20px;
+    }
+
+    .login-card {
+        padding: 30px 24px;
+    }
+
+    .login-title {
+        font-size: 22px;
+    }
+
+    .brand-title {
+        font-size: 24px;
+    }
+
+    .brand-subtitle {
+        font-size: 13px;
+    }
+
+    .custom-input {
+        padding: 12px 14px 12px 42px;
+        font-size: 14px;
+    }
+
+    .btn-login {
+        padding: 13px;
+        font-size: 15px;
+    }
+
+    .social-login {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Móviles pequeños */
+@media (max-width: 375px) {
+    .logo-wrapper {
+        width: 70px;
+        height: 70px;
+    }
+
+    .logo-icon {
+        font-size: 36px;
+    }
+
+    .brand-title {
+        font-size: 22px;
+    }
+
+    .login-card {
+        padding: 25px 20px;
+    }
+
+    .login-title {
+        font-size: 20px;
+    }
+
+    .custom-label {
+        font-size: 12px;
+    }
+
+    .small-options {
+        flex-direction: column;
+        gap: 12px;
+        align-items: flex-start !important;
+    }
+}
+
+/* MINI (< 320px) */
+@media (max-width: 320px) {
+    .login-card {
+        padding: 20px 16px;
+    }
+
+    .login-title {
+        font-size: 18px;
+    }
+
+    .btn-login {
+        padding: 11px;
+        font-size: 14px;
+    }
+}
+
+/* ==========================================================
+           LOADING SPINNER (OPCIONAL)
+        ========================================================== */
+.spinner {
+    display: none;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.btn-login.loading .spinner {
+    display: inline-block;
+}
+
+.btn-login.loading span {
+    display: none;
+}
