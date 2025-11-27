@@ -2,70 +2,44 @@
 <html lang="es">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>@yield('title') - Sistema Tickets Trimax</title>
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ asset('assets/css/style.css') }}">
 </head>
 
 <body>
+
     @auth
-        <header>
-            <h1>🎯 Sistema Automatizado de Tickets y Alarmas - Trimax</h1>
-            <nav>
-                <a href="{{ route('dashboard') }}">Dashboard</a> |
-                <a href="{{ route('tickets.index') }}">Tickets</a> |
-                @can('ver-monitoreo')
-                    <a href="{{ route('monitoreo.index') }}">🖥️ Monitoreo</a> |
-                @endcan
-                @can('ver-alarmas')
-                    <a href="{{ route('alarmas.index') }}">🔔 Alarmas</a> |
-                @endcan
-                @can('gestionar-sedes')
-                    <a href="{{ route('sedes.index') }}">Sedes</a> |
-                @endcan
-                @can('gestionar-usuarios')
-                    <a href="{{ route('usuarios.index') }}">Usuarios</a> |
-                @endcan
-                <span>{{ auth()->user()->nombre }} ({{ auth()->user()->rol }})</span> |
-                <form action="{{ route('logout') }}" method="POST" style="display:inline">
-                    @csrf
-                    <button type="submit">Salir</button>
-                </form>
-            </nav>
-            <hr>
-        </header>
+        <!-- SIDEBAR -->
+        @include('includes.sidebar')
+        <!-- OVERLAY MOBILE -->
     @endauth
+    <div class="overlay" id="overlay"></div>
 
-    @if (session('success'))
-        <p style="color:green; background-color:#90EE90; padding:10px"><strong>✅ {{ session('success') }}</strong></p>
-    @endif
+    <!-- MAIN -->
+    <div class="main">
+        <!-- TOPBAR -->
+        @include('includes.topbar')
 
-    @if (session('error'))
-        <p style="color:red; background-color:#FFB6C1; padding:10px"><strong>❌ {{ session('error') }}</strong></p>
-    @endif
+        <!-- CONTENT -->
+        <div class="content">
 
-    @if ($errors->any())
-        <div style="color:red; background-color:#FFB6C1; padding:10px">
-            <ul>
-                @foreach ($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul>
+            @yield('content')
+
         </div>
-    @endif
+    </div>
 
-    <main>
-        @yield('content')
-    </main>
-
-    @auth
-        <hr>
-        <footer>
-            <p>&copy; 2024 Laboratorio Óptico Trimax - Sistema Automatizado de Tickets y Alarmas</p>
-            <p>Con monitoreo en tiempo real, asignación automática y notificaciones por WhatsApp/Email</p>
-            <p>Desarrollado por Bach. Renato Ruiz y Bach. Frank Sánchez</p>
-        </footer>
-    @endauth
+    <!-- SCRIPTS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ asset('assets/js/app.js') }}"></script>
 </body>
 
 </html>
