@@ -163,7 +163,7 @@
 
             <div class="alarma-actions">
                 @if ($alarma->ticket)
-                    <a href="{{ route('tickets.show', $alarma->ticket->id) }}" class="btn-action btn-action-primary">
+                    <a href="{{ route('tickets.index', $alarma->ticket->id) }}" class="btn-action btn-action-primary">
                         <i class="bi bi-eye"></i> Ver Detalles
                     </a>
                 @endif
@@ -179,26 +179,26 @@
                 @endif
 
                 @if ($alarma->ticket)
-                    <a href="{{ route('tickets.show', $alarma->ticket->id) }}" class="btn-action btn-action-outline">
+                    <a href="{{ route('tickets.index', $alarma->ticket->id) }}" class="btn-action-outline btn-action">
                         <i class="bi bi-ticket-perforated"></i> Ver Ticket
                     </a>
                 @elseif($alarma->activa)
                     <a href="{{ route('tickets.create') }}?alarma_id={{ $alarma->id }}"
-                        class="btn-action btn-action-outline">
+                        class="btn-action-outline btn-action">
                         <i class="bi bi-plus-circle"></i> Crear Ticket
                     </a>
                 @endif
 
                 @if ($alarma->ticket && $alarma->ticket->sede)
                     <a href="{{ route('monitoreo.detalle', $alarma->ticket->sede->id) }}"
-                        class="btn-action btn-action-outline">
+                        class="btn-action-outline btn-action">
                         <i class="bi bi-graph-up"></i> Ver Historial
                     </a>
                 @endif
             </div>
         </div>
     @empty
-        <div class="text-center py-5">
+        <div class="py-5 text-center">
             <i class="bi bi-bell-slash" style="font-size: 3rem; color: var(--color-6);"></i>
             <p class="mt-3 text-muted">No hay alarmas registradas</p>
         </div>
@@ -206,7 +206,7 @@
 
     <!-- PAGINATION -->
     @if ($alarmas->hasPages())
-        <div class="pagination-wrapper mt-4">
+        <div class="mt-4 pagination-wrapper">
             <span class="pagination-info">
                 Mostrando {{ $alarmas->firstItem() }} - {{ $alarmas->lastItem() }} de {{ $alarmas->total() }} alarmas
             </span>

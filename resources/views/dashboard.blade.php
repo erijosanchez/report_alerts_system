@@ -34,7 +34,7 @@
                         <div class="metric-value" data-target="{{ $stats['abiertos'] }}" id="m2">0</div>
                         <div class="metric-foot">
                             <span class="pill {{ ($stats['variacion_abiertos'] ?? 0) >= 0 ? 'negative' : 'positive' }}">
-                                <i class="bi bi-arrow-{{ ($stats['variacion_abiertos'] ?? 0) >= 0 ? 'up' : 'down' }}"></i> 
+                                <i class="bi bi-arrow-{{ ($stats['variacion_abiertos'] ?? 0) >= 0 ? 'up' : 'down' }}"></i>
                                 {{ ($stats['variacion_abiertos'] ?? 0) >= 0 ? '+' : '' }}{{ $stats['variacion_abiertos'] ?? 0 }}%
                             </span>
                         </div>
@@ -55,7 +55,7 @@
                         <div class="metric-value" data-target="{{ $stats['en_proceso'] }}" id="m3">0</div>
                         <div class="metric-foot">
                             <span class="pill {{ ($stats['variacion_proceso'] ?? 0) >= 0 ? 'positive' : 'negative' }}">
-                                <i class="bi bi-arrow-{{ ($stats['variacion_proceso'] ?? 0) >= 0 ? 'up' : 'down' }}"></i> 
+                                <i class="bi bi-arrow-{{ ($stats['variacion_proceso'] ?? 0) >= 0 ? 'up' : 'down' }}"></i>
                                 {{ ($stats['variacion_proceso'] ?? 0) >= 0 ? '+' : '' }}{{ $stats['variacion_proceso'] ?? 0 }}%
                             </span>
                         </div>
@@ -76,7 +76,7 @@
                         <div class="metric-value" data-target="{{ $stats['resueltos'] }}" id="m4">0</div>
                         <div class="metric-foot">
                             <span class="pill {{ ($stats['variacion_resueltos'] ?? 0) >= 0 ? 'positive' : 'negative' }}">
-                                <i class="bi bi-arrow-{{ ($stats['variacion_resueltos'] ?? 0) >= 0 ? 'up' : 'down' }}"></i> 
+                                <i class="bi bi-arrow-{{ ($stats['variacion_resueltos'] ?? 0) >= 0 ? 'up' : 'down' }}"></i>
                                 {{ ($stats['variacion_resueltos'] ?? 0) >= 0 ? '+' : '' }}{{ $stats['variacion_resueltos'] ?? 0 }}%
                             </span>
                         </div>
@@ -97,8 +97,8 @@
                 <div style="font-size:20px;font-weight:800;color:var(--color-10);margin-top:8px;">
                     {{ round($stats['tiempo_respuesta_promedio'] ?? 0) }} minutos</div>
                 <div class="mt-2 muted">
-                    <i class="bi bi-arrow-{{ ($stats['variacion_tiempo_respuesta'] ?? 0) <= 0 ? 'down' : 'up' }}" 
-                       style="color:{{ ($stats['variacion_tiempo_respuesta'] ?? 0) <= 0 ? '#0b944f' : '#dc2626' }};margin-right:8px"></i>
+                    <i class="bi bi-arrow-{{ ($stats['variacion_tiempo_respuesta'] ?? 0) <= 0 ? 'down' : 'up' }}"
+                        style="color:{{ ($stats['variacion_tiempo_respuesta'] ?? 0) <= 0 ? '#0b944f' : '#dc2626' }};margin-right:8px"></i>
                     {{ ($stats['variacion_tiempo_respuesta'] ?? 0) > 0 ? '+' : '' }}{{ $stats['variacion_tiempo_respuesta'] ?? 0 }}min
                 </div>
             </div>
@@ -110,8 +110,8 @@
                 <div style="font-size:20px;font-weight:800;color:var(--color-10);margin-top:8px;">
                     {{ round($stats['tiempo_resolucion_promedio'] ?? 0) }} minutos</div>
                 <div class="mt-2 muted">
-                    <i class="bi bi-arrow-{{ ($stats['variacion_tiempo_resolucion'] ?? 0) <= 0 ? 'down' : 'up' }}" 
-                       style="color:{{ ($stats['variacion_tiempo_resolucion'] ?? 0) <= 0 ? '#0b944f' : '#dc2626' }};margin-right:8px"></i>
+                    <i class="bi bi-arrow-{{ ($stats['variacion_tiempo_resolucion'] ?? 0) <= 0 ? 'down' : 'up' }}"
+                        style="color:{{ ($stats['variacion_tiempo_resolucion'] ?? 0) <= 0 ? '#0b944f' : '#dc2626' }};margin-right:8px"></i>
                     {{ ($stats['variacion_tiempo_resolucion'] ?? 0) > 0 ? '+' : '' }}{{ $stats['variacion_tiempo_resolucion'] ?? 0 }}min
                 </div>
             </div>
@@ -123,14 +123,65 @@
                 <div style="font-size:20px;font-weight:800;color:var(--color-10);margin-top:8px;">
                     {{ number_format($stats['calificacion_promedio'] ?? 0, 1) }} / 5</div>
                 <div class="mt-2 muted">
-                    <i class="bi bi-arrow-{{ ($stats['variacion_calificacion'] ?? 0) >= 0 ? 'up' : 'down' }}" 
-                       style="color:{{ ($stats['variacion_calificacion'] ?? 0) >= 0 ? '#0b944f' : '#dc2626' }};margin-right:8px"></i>
+                    <i class="bi bi-arrow-{{ ($stats['variacion_calificacion'] ?? 0) >= 0 ? 'up' : 'down' }}"
+                        style="color:{{ ($stats['variacion_calificacion'] ?? 0) >= 0 ? '#0b944f' : '#dc2626' }};margin-right:8px"></i>
                     {{ ($stats['variacion_calificacion'] ?? 0) >= 0 ? '+' : '' }}{{ number_format($stats['variacion_calificacion'] ?? 0, 1) }}
                 </div>
             </div>
         </div>
     </div>
 
+    <div class="modal fade" id="crearTicketModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-plus-circle"></i> Nuevo Ticket</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form action="{{ route('tickets.store') }}" method="POST">
+                    @csrf
+                    <div class="modal-body">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label">Título *</label>
+                                <input type="text" name="titulo" class="form-control"
+                                    placeholder="Ej: Problema con impresora" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Categoría *</label>
+                                <select name="categoria_id" class="form-select" required>
+                                    <option value="">Seleccionar...</option>
+                                    @foreach ($categorias as $categoria)
+                                        <option value="{{ $categoria->id }}">{{ $categoria->nombre }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Prioridad *</label>
+                                <select name="prioridad_id" class="form-select" required>
+                                    <option value="">Seleccionar...</option>
+                                    @foreach ($prioridades as $prioridad)
+                                        <option value="{{ $prioridad->id }}">{{ $prioridad->nombre }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Descripción *</label>
+                                <textarea name="descripcion" class="form-control" rows="5"
+                                    placeholder="Describe el problema con el mayor detalle posible..." required></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i> Crear Ticket
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
     <!-- TABLE -->
     <div class="table-card">
         <div class="card">
@@ -140,12 +191,12 @@
                     Tickets Recientes
                 </h5>
                 <div class="d-flex flex-wrap gap-2">
-                    <a href="{{ route('tickets.create') }}" class="btn-primary">
-                        <i class="bi bi-plus-circle"></i>
-                        <span class="d-sm-inline d-none">Nuevo</span>
-                    </a>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#crearTicketModal">
+                        <i class="bi bi-plus-circle"></i> Nuevo
+                    </button>
                 </div>
             </div>
+
 
             <div class="table-responsive">
                 <table class="custom-table">
@@ -175,23 +226,28 @@
                                             'baja' => ['dot' => '#10b981', 'badge' => 'success'],
                                             'media' => ['dot' => '#f59e0b', 'badge' => 'warning'],
                                             'alta' => ['dot' => '#ef4444', 'badge' => 'danger'],
-                                            'urgente' => ['dot' => '#dc2626', 'badge' => 'danger']
+                                            'urgente' => ['dot' => '#dc2626', 'badge' => 'danger'],
                                         ];
                                         $prioridadNombre = strtolower($ticket->prioridad->nombre);
-                                        $color = $prioridadColors[$prioridadNombre] ?? ['dot' => '#6b7280', 'badge' => 'secondary'];
+                                        $color = $prioridadColors[$prioridadNombre] ?? [
+                                            'dot' => '#6b7280',
+                                            'badge' => 'secondary',
+                                        ];
                                     @endphp
                                     <span style="display:inline-flex;align-items:center;">
                                         <span class="priority-dot" style="background:{{ $color['dot'] }}"></span>
-                                        <span class="badge bg-{{ $color['badge'] }}">{{ $ticket->prioridad->nombre }}</span>
+                                        <span
+                                            class="badge bg-{{ $color['badge'] }}">{{ $ticket->prioridad->nombre }}</span>
                                     </span>
                                 </td>
-                                <td><span class="badge bg-warning text-dark">{{ $ticket->estado }}</span></td>
+                                <td><span class="bg-warning text-dark badge">{{ $ticket->estado }}</span></td>
                                 @if (auth()->user()->esStaff())
                                     <td>{{ $ticket->tecnico ? $ticket->tecnico->nombre : 'Sin asignar' }}</td>
                                 @endif
                                 <td>{{ $ticket->fecha_apertura->format('d/m/Y H:i') }}</td>
                                 <td class="table-actions">
-                                    <a href="{{ route('tickets.show', $ticket->id) }}" class="btn btn-sm btn-outline-primary" title="Ver">
+                                    <a href="{{ route('tickets.show', $ticket->id) }}"
+                                        class="btn-outline-primary btn btn-sm" title="Ver">
                                         <i class="bi bi-eye"></i>
                                     </a>
                                 </td>
@@ -207,4 +263,5 @@
 
         </div>
     </div>
+
 @endsection

@@ -82,7 +82,7 @@
                                 </div>
                             </td>
                             <td>{{ $sede->direccion }}, {{ $sede->ciudad }}</td>
-                            <td><code>{{ $sede->ip_monitoreo }}</code></td>
+                            <td><code>{{ $sede->ip_principal }}</code></td>
                             <td>
                                 <span class="status-badge {{ $estadoClass }}">
                                     <span class="status-dot {{ $estadoClass }}"></span> {{ $estadoLabel }}
@@ -156,7 +156,7 @@
                                                 </div>
                                                 <div class="col-md-6">
                                                     <label class="form-label">IP Principal *</label>
-                                                    <input type="text" name="ip_monitoreo" class="form-control" value="{{ $sede->ip_monitoreo }}" required>
+                                                    <input type="text" name="ip_principal" class="form-control" value="{{ $sede->ip_principal }}" required>
                                                 </div>
                                                 <div class="col-md-6">
                                                     <label class="form-label">IP Backup</label>
@@ -181,10 +181,10 @@
                         </div>
                     @empty
                         <tr>
-                            <td colspan="7" class="text-center py-5">
+                            <td colspan="7" class="py-5 text-center">
                                 <i class="bi bi-building" style="font-size: 3rem; color: var(--color-6);"></i>
                                 <p class="mt-3 text-muted">No hay sedes registradas</p>
-                                <button class="btn btn-primary mt-2" data-bs-toggle="modal" data-bs-target="#crearSedeModal">
+                                <button class="mt-2 btn btn-primary" data-bs-toggle="modal" data-bs-target="#crearSedeModal">
                                     <i class="bi bi-plus-circle"></i> Crear Primera Sede
                                 </button>
                             </td>
@@ -235,7 +235,7 @@
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">IP Principal *</label>
-                                <input type="text" name="ip_monitoreo" class="form-control" placeholder="Ej: 192.168.1.10" required>
+                                <input type="text" name="ip_principal" class="form-control" placeholder="Ej: 192.168.1.10" required>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">IP Backup</label>

@@ -90,7 +90,7 @@
                     <i class="bi bi-hdd-network"></i>
                     <div>
                         <div class="info-label">IP Principal</div>
-                        <div class="info-value">{{ $sede->ip_monitoreo }}</div>
+                        <div class="info-value">{{ $sede->ip_principal }}</div>
                     </div>
                 </div>
                 <div class="info-item">
@@ -126,15 +126,15 @@
 
                 @if ($sede->estado_conexion === 'offline')
                     <div class="info-item">
-                        <i class="bi bi-exclamation-triangle-fill text-danger-custom"></i>
+                        <i class="text-danger-custom bi bi-exclamation-triangle-fill"></i>
                         <div>
                             <div class="info-label">Estado</div>
-                            <div class="info-value text-danger-custom">Caída detectada</div>
+                            <div class="text-danger-custom info-value">Caída detectada</div>
                         </div>
                     </div>
                 @elseif($sede->estado_conexion === 'degradado')
                     <div class="info-item">
-                        <i class="bi bi-exclamation-triangle text-warning-custom"></i>
+                        <i class="text-warning-custom bi bi-exclamation-triangle"></i>
                         <div>
                             <div class="info-label">Estado</div>
                             <div class="info-value">Alta latencia</div>
@@ -142,7 +142,7 @@
                     </div>
                 @else
                     <div class="info-item">
-                        <i class="bi bi-check-circle-fill text-success-custom"></i>
+                        <i class="text-success-custom bi bi-check-circle-fill"></i>
                         <div>
                             <div class="info-label">Servicios</div>
                             <div class="info-value">{{ $sede->servicios_monitoreados ?? 'Web, ERP, POS' }}</div>
@@ -204,7 +204,7 @@
                 </form>
 
                 @if ($ticketAsociado)
-                    <a href="{{ route('tickets.show', $ticketAsociado->id) }}" class="btn-action btn-action-outline">
+                    <a href="{{ route('tickets.show', $ticketAsociado->id) }}" class="btn-action-outline btn-action">
                         <i class="bi bi-ticket-perforated"></i> Ver Ticket
                     </a>
                 @endif
@@ -213,7 +213,7 @@
     @endforeach
 
     @if ($sedes->isEmpty())
-        <div class="text-center py-5">
+        <div class="py-5 text-center">
             <i class="bi bi-building" style="font-size: 3rem; color: var(--color-6);"></i>
             <p class="mt-3 text-muted">No hay sedes configuradas para monitoreo</p>
         </div>

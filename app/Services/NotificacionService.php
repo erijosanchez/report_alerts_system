@@ -13,14 +13,16 @@ class NotificacionService
     /**
      * Enviar notificación por email
      */
-    public function enviarEmail(Alarma $alarma)
+    public function enviarEmail(Alarma $alarma, array $destinatarios)
     {
         try {
-            foreach ($alarma->destinatarios as $destinatario) {
+            foreach ($destinatarios as $destinatario) {
                 if (!empty($destinatario['email'])) {
-                    Mail::raw($alarma->mensaje, function ($message) use ($destinatario, $alarma) {
+                    $mensaje = $alarma->mensaje . "\n\n" . $alarma->detalle;
+
+                    Mail::raw($mensaje, function ($message) use ($destinatario, $alarma) {
                         $message->to($destinatario['email'], $destinatario['nombre'])
-                            ->subject($alarma->titulo);
+                            ->subject($alarma->mensaje);
                     });
 
                     Log::info("Email enviado a {$destinatario['email']} para alarma #{$alarma->id}");
@@ -36,7 +38,7 @@ class NotificacionService
     /**
      * Enviar notificación por WhatsApp (Twilio)
      */
-    public function enviarWhatsApp(Alarma $alarma)
+    public function enviarWhatsApp(Alarma $alarma, array $destinatarios)
     {
         try {
             // Configuración de Twilio
@@ -49,9 +51,16 @@ class NotificacionService
                 return false;
             }
 
-            $twilio = new \Twilio\Rest\Client($twilioSid, $twilioToken);
+            // Requiere composer require twilio/sdk
+            if (!class_exists('\Twilio\Rest\Client')) {
+                Log::warning("Twilio SDK no instalado. Ejecuta: composer require twilio/sdk");
+                return false;
+            }
 
-            foreach ($alarma->destinatarios as $destinatario) {
+            $twilio = new \Twilio\Rest\Client($twilioSid, $twilioToken);
+            $mensaje = $alarma->mensaje . "\n\n" . $alarma->detalle;
+
+            foreach ($destinatarios as $destinatario) {
                 if (!empty($destinatario['telefono'])) {
                     $numeroDestino = 'whatsapp:' . $destinatario['telefono'];
 
@@ -59,7 +68,7 @@ class NotificacionService
                         $numeroDestino,
                         [
                             'from' => $twilioWhatsApp,
-                            'body' => $alarma->mensaje
+                            'body' => $mensaje
                         ]
                     );
 
@@ -74,58 +83,21 @@ class NotificacionService
     }
 
     /**
-     * Enviar SMS (alternativa o complemento a WhatsApp)
-     */
-    public function enviarSMS(Alarma $alarma)
-    {
-        try {
-            $twilioSid = env('TWILIO_ACCOUNT_SID');
-            $twilioToken = env('TWILIO_AUTH_TOKEN');
-            $twilioPhone = env('TWILIO_PHONE_FROM');
-
-            if (!$twilioSid || !$twilioToken || !$twilioPhone) {
-                Log::warning("Twilio no configurado para SMS.");
-                return false;
-            }
-
-            $twilio = new \Twilio\Rest\Client($twilioSid, $twilioToken);
-
-            foreach ($alarma->destinatarios as $destinatario) {
-                if (!empty($destinatario['telefono'])) {
-                    $twilio->messages->create(
-                        $destinatario['telefono'],
-                        [
-                            'from' => $twilioPhone,
-                            'body' => $alarma->mensaje
-                        ]
-                    );
-
-                    Log::info("SMS enviado a {$destinatario['telefono']} para alarma #{$alarma->id}");
-                }
-            }
-            return true;
-        } catch (\Exception $e) {
-            Log::error("Error enviando SMS: {$e->getMessage()}");
-            return false;
-        }
-    }
-
-    /**
      * Notificar asignación de ticket a técnico
      */
     public function notificarAsignacion(Ticket $ticket, Usuario $tecnico)
     {
         try {
-            $mensaje = "Nuevo ticket asignado:\n\n" .
-                "Ticket: {$ticket->numero_ticket}\n" .
-                "Título: {$ticket->titulo}\n" .
-                "Prioridad: {$ticket->prioridad->nombre}\n" .
-                "Cliente: {$ticket->usuario->nombre}\n\n" .
+            $mensaje = "✅ Nuevo ticket asignado:\n\n" .
+                "📋 Ticket: {$ticket->numero_ticket}\n" .
+                "📝 Título: {$ticket->titulo}\n" .
+                "⚡ Prioridad: {$ticket->prioridad->nombre}\n" .
+                "👤 Cliente: {$ticket->usuario->nombre}\n\n" .
                 "Por favor, revisa el ticket en el sistema.";
 
             // Email
             Mail::raw($mensaje, function ($message) use ($tecnico, $ticket) {
-                $message->to($tecnico->email, $tecnico->nombre)
+                $message->to($tecnico->email, $tecnico->nombre . ' ' . $tecnico->apellido)
                     ->subject("Nuevo Ticket Asignado: {$ticket->numero_ticket}");
             });
 

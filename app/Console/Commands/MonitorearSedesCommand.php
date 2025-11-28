@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use App\Services\MonitoreoService;
+use Illuminate\Console\Scheduling\Schedule;
 
 class MonitorearSedesCommand extends Command
 {

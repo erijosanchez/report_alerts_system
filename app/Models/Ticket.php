@@ -119,4 +119,9 @@ class Ticket extends Model
 
         $this->update($datos);
     }
+
+    public function sede()
+    {
+        return $this->belongsTo(Sede::class, 'sede_id', 'id');
+    }
 }

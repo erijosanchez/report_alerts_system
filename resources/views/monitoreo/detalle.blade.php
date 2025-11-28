@@ -4,10 +4,10 @@
 
 @section('content')
     <!-- HEADER -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex align-items-center justify-content-between mb-4">
         <div class="card">
             <h2><i class="bi bi-hdd-network-fill" style="color: var(--color-6);"></i> {{ $sede->nombre }}</h2>
-            <p class="text-muted mb-0">
+            <p class="mb-0 text-muted">
                 <i class="bi bi-geo-alt"></i> {{ $sede->direccion }}, {{ $sede->ciudad }}
             </p>
             <p class="text-muted">
@@ -16,7 +16,7 @@
         </div>
         <div class="d-flex gap-2">
             <a href="{{ route('monitoreo.index') }}" class="btn btn-secondary">
-                <i class="bi bi-arrow-left"></i> Volver
+                <i class="bi-arrow-left bi"></i> Volver
             </a>
             <form action="{{ route('monitoreo.forzar', $sede->id) }}" method="POST">
                 @csrf
@@ -52,8 +52,8 @@
     @endphp
 
     <div class="sede-card {{ $estadoClass }} mb-4">
-        <div class="row align-items-center">
-            <div class="col-md-2 text-center">
+        <div class="align-items-center row">
+            <div class="text-center col-md-2">
                 <div class="pulse {{ $estadoClass }}"
                     style="width: 80px; height: 80px; border-radius: 50%; background: white; display: inline-flex; align-items: center; justify-content: center; margin: 0 auto;">
                     <i class="bi {{ $estadoIcon }}" style="font-size: 3rem;"></i>
@@ -74,53 +74,53 @@
     </div>
 
     <!-- MÉTRICAS PRINCIPALES -->
-    <div class="row g-3 mb-4">
+    <div class="mb-4 row g-3">
         <div class="col-6 col-md-3">
-            <div class="card text-center">
+            <div class="text-center card">
                 <div class="card-body">
                     <i class="bi bi-percent" style="font-size: 2rem; color: var(--color-6);"></i>
                     <h3 class="mt-2 mb-0" style="color: var(--color-10);">{{ number_format($uptime, 1) }}%</h3>
-                    <p class="text-muted mb-0">Uptime (24h)</p>
+                    <p class="mb-0 text-muted">Uptime (24h)</p>
                 </div>
             </div>
         </div>
         <div class="col-6 col-md-3">
-            <div class="card text-center">
+            <div class="text-center card">
                 <div class="card-body">
                     <i class="bi bi-speedometer2" style="font-size: 2rem; color: #10b981;"></i>
                     <h3 class="mt-2 mb-0" style="color: var(--color-10);">
                         {{ $historial->where('resultado', 'success')->avg('latencia_ms') ? round($historial->where('resultado', 'success')->avg('latencia_ms')) : 0 }}ms
                     </h3>
-                    <p class="text-muted mb-0">Latencia Promedio</p>
+                    <p class="mb-0 text-muted">Latencia Promedio</p>
                 </div>
             </div>
         </div>
         <div class="col-6 col-md-3">
-            <div class="card text-center">
+            <div class="text-center card">
                 <div class="card-body">
                     <i class="bi bi-exclamation-triangle" style="font-size: 2rem; color: #ef4444;"></i>
                     <h3 class="mt-2 mb-0" style="color: var(--color-10);">
                         {{ $historial->where('resultado', 'fail')->count() }}
                     </h3>
-                    <p class="text-muted mb-0">Incidentes (24h)</p>
+                    <p class="mb-0 text-muted">Incidentes (24h)</p>
                 </div>
             </div>
         </div>
         <div class="col-6 col-md-3">
-            <div class="card text-center">
+            <div class="text-center card">
                 <div class="card-body">
                     <i class="bi bi-ticket-detailed" style="font-size: 2rem; color: #f59e0b;"></i>
                     <h3 class="mt-2 mb-0" style="color: var(--color-10);">
                         {{ $sede->tickets->count() }}
                     </h3>
-                    <p class="text-muted mb-0">Tickets Generados</p>
+                    <p class="mb-0 text-muted">Tickets Generados</p>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- INFORMACIÓN DE CONEXIÓN Y SERVICIOS -->
-    <div class="row g-3 mb-4">
+    <div class="mb-4 row g-3">
         <div class="col-md-6">
             <div class="card">
                 <div class="card-body">
@@ -131,9 +131,9 @@
                             <tr>
                                 <th width="40%">IP Principal</th>
                                 <td>
-                                    <code>{{ $sede->ip_monitoreo }}</code>
-                                    <button onclick="copiarIP('{{ $sede->ip_monitoreo }}')"
-                                        class="btn btn-sm btn-outline-secondary ms-2">
+                                    <code>{{ $sede->ip_principal }}</code>
+                                    <button onclick="copiarIP('{{ $sede->ip_principal }}')"
+                                        class="ms-2 btn-outline-secondary btn btn-sm">
                                         <i class="bi bi-clipboard"></i>
                                     </button>
                                 </td>
@@ -144,7 +144,7 @@
                                     <td>
                                         <code>{{ $sede->ip_backup }}</code>
                                         <button onclick="copiarIP('{{ $sede->ip_backup }}')"
-                                            class="btn btn-sm btn-outline-secondary ms-2">
+                                            class="ms-2 btn-outline-secondary btn btn-sm">
                                             <i class="bi bi-clipboard"></i>
                                         </button>
                                     </td>
@@ -154,9 +154,9 @@
                                 <th>Estado</th>
                                 <td>
                                     @if ($sede->activa)
-                                        <span class="badge bg-success">Activa</span>
+                                        <span class="bg-success badge">Activa</span>
                                     @else
-                                        <span class="badge bg-secondary">Inactiva</span>
+                                        <span class="bg-secondary badge">Inactiva</span>
                                     @endif
                                 </td>
                             </tr>
@@ -177,19 +177,19 @@
                     <div class="p-2">
                         @if ($sede->servicios_monitoreados)
                             @foreach (explode(',', $sede->servicios_monitoreados) as $servicio)
-                                <span class="badge me-2 mb-2"
+                                <span class="me-2 mb-2 badge"
                                     style="background: var(--color-6); font-size: 0.9rem; padding: 8px 15px;">
                                     <i class="bi bi-check-circle"></i> {{ strtoupper(trim($servicio)) }}
                                 </span>
                             @endforeach
                         @else
-                            <span class="badge bg-primary me-2 mb-2" style="font-size: 0.9rem; padding: 8px 15px;">
+                            <span class="bg-primary me-2 mb-2 badge" style="font-size: 0.9rem; padding: 8px 15px;">
                                 <i class="bi bi-check-circle"></i> WEB
                             </span>
-                            <span class="badge bg-primary me-2 mb-2" style="font-size: 0.9rem; padding: 8px 15px;">
+                            <span class="bg-primary me-2 mb-2 badge" style="font-size: 0.9rem; padding: 8px 15px;">
                                 <i class="bi bi-check-circle"></i> ERP
                             </span>
-                            <span class="badge bg-primary me-2 mb-2" style="font-size: 0.9rem; padding: 8px 15px;">
+                            <span class="bg-primary me-2 mb-2 badge" style="font-size: 0.9rem; padding: 8px 15px;">
                                 <i class="bi bi-check-circle"></i> POS
                             </span>
                         @endif
@@ -200,7 +200,7 @@
     </div>
 
     <!-- HISTORIAL DE LOGS -->
-    <div class="card mb-4">
+    <div class="mb-4 card">
         <div class="card-body">
             <h5 class="mb-3"><i class="bi bi-clock-history" style="color: var(--color-6);"></i> Historial de Monitoreo
                 (Últimas 24 horas)</h5>
@@ -221,15 +221,15 @@
                             <tr>
                                 <td>
                                     @if ($log->resultado == 'success')
-                                        <span class="badge bg-success">
+                                        <span class="bg-success badge">
                                             <i class="bi bi-check-circle"></i> Exitoso
                                         </span>
                                     @elseif($log->resultado == 'fail')
-                                        <span class="badge bg-danger">
+                                        <span class="bg-danger badge">
                                             <i class="bi bi-x-circle"></i> Fallido
                                         </span>
                                     @else
-                                        <span class="badge bg-warning">
+                                        <span class="bg-warning badge">
                                             <i class="bi bi-hourglass-split"></i> Timeout
                                         </span>
                                     @endif
@@ -237,7 +237,7 @@
                                 <td><strong>{{ strtoupper($log->tipo_chequeo ?? 'PING') }}</strong></td>
                                 <td>
                                     @if ($log->latencia_ms)
-                                        <span class="badge bg-info">{{ round($log->latencia_ms) }} ms</span>
+                                        <span class="bg-info badge">{{ round($log->latencia_ms) }} ms</span>
                                     @else
                                         <span class="text-muted">-</span>
                                     @endif
@@ -258,12 +258,58 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="5" class="text-center py-4">
+                                <td colspan="5" class="py-4 text-center">
                                     <i class="bi bi-inbox" style="font-size: 2rem; color: var(--color-6);"></i>
                                     <p class="mt-2 text-muted">No hay logs registrados en las últimas 24 horas</p>
                                 </td>
                             </tr>
                         @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    // Puedes agregar esto en monitoreo/detalle.blade.php para ver los logs con info extra
+
+    <div class="card">
+        <div class="card-body">
+            <h6>Logs Detallados</h6>
+            <div class="table-responsive">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Resultado</th>
+                            <th>Estado Anterior</th>
+                            <th>Estado Nuevo</th>
+                            <th>Cambió</th>
+                            <th>Ticket</th>
+                            <th>Detalles</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($historial as $log)
+                            <tr>
+                                <td>{{ $log->fecha_chequeo->format('d/m H:i') }}</td>
+                                <td>
+                                    <span class="badge bg-{{ $log->resultado == 'success' ? 'success' : 'danger' }}">
+                                        {{ $log->resultado }}
+                                    </span>
+                                </td>
+                                <td>{{ $log->estado_anterior ?? '-' }}</td>
+                                <td>{{ $log->estado_nuevo ?? '-' }}</td>
+                                <td>
+                                    @if ($log->cambio_estado)
+                                        <i class="text-warning bi bi-check-circle"></i>
+                                    @else
+                                        -
+                                    @endif
+                                </td>
+                                <td>{{ $log->ticket_generado ?? '-' }}</td>
+                                <td><small>{{ Str::limit($log->detalles, 50) }}</small></td>
+                            </tr>
+                        @endforeach
                     </tbody>
                 </table>
             </div>

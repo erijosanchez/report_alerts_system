@@ -23,14 +23,14 @@
                     <div class="d-xl-block me-2 last-connection d-none">
                         Última conexión: <strong>21 Nov 2025 — 09:45</strong>
                     </div>
-                    <button class="btn-outline">
+                    <!--<button class="btn-outline">
                         <i class="bi bi-download"></i>
                         <span class="d-sm-inline d-none">Exportar</span>
                     </button>
                     <a href="" class="btn-primary">
                         <i class="bi bi-plus-circle"></i>
                         <span class="d-sm-inline d-none">Nuevo Ticket</span>
-                    </a>
+                    </a> -->
                 </div>
             </div>
         </div>

@@ -16,14 +16,14 @@ class Kernel extends ConsoleKernel
     {
         // Monitorear sedes cada 5 minutos
         $schedule->command('monitoreo:sedes')
-                 ->everyFiveMinutes()
-                 ->withoutOverlapping()
-                 ->runInBackground();
-        
+            ->everyFiveMinutes()
+            ->withoutOverlapping()
+            ->runInBackground();
+
         // Procesar escalamientos cada 15 minutos
         $schedule->command('tickets:escalar')
-                 ->everyFifteenMinutes()
-                 ->withoutOverlapping()
-                 ->runInBackground();
+            ->everyFifteenMinutes()
+            ->withoutOverlapping()
+            ->runInBackground();
     }
 }

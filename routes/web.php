@@ -35,8 +35,6 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/reportes/{tipo}/pdf', [ReporteController::class, 'exportarPDF'])->name('reportes.pdf');
 
     // Tickets
-    // Tickets
-    // Tickets
     Route::get('/tickets', [TicketController::class, 'index'])->name('tickets.index');
     Route::post('/tickets', [TicketController::class, 'store'])->name('tickets.store');
     Route::post('/tickets/{id}/asignar', [TicketController::class, 'asignar'])->name('tickets.asignar');
@@ -78,6 +76,8 @@ Route::middleware(['auth'])->group(function () {
             ->name('alarmas.desactivar')
             ->middleware('can:gestionar-alarmas');
     });
+
+    Route::get('/reportes', [ReporteController::class, 'index'])->name('reportes.index');
 });
 
 require __DIR__ . '/auth.php';

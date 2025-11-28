@@ -24,7 +24,7 @@ class SedeController extends Controller
             });
         }
 
-        $sedes = $query->orderBy('nombre')->paginate(10);
+        $sedes = $query->orderBy('nombre')->paginate(100);
 
         // Calcular métricas para cada sede
         $hace30Dias = Carbon::now()->subDays(30);
@@ -61,7 +61,7 @@ class SedeController extends Controller
             'codigo' => 'required|max:20|unique:sedes,codigo',
             'direccion' => 'required',
             'ciudad' => 'required|max:100',
-            'ip_monitoreo' => 'required|ip',
+            'ip_principal' => 'required|ip',
             'ip_backup' => 'nullable|ip',
             'intervalo_monitoreo' => 'required|integer|min:1|max:60',
         ]);
@@ -84,7 +84,7 @@ class SedeController extends Controller
             'nombre' => 'required|max:100',
             'direccion' => 'required',
             'ciudad' => 'required|max:100',
-            'ip_monitoreo' => 'required|ip',
+            'ip_principal' => 'required|ip',
             'ip_backup' => 'nullable|ip',
             'intervalo_monitoreo' => 'required|integer|min:1|max:60',
             'activa' => 'boolean',

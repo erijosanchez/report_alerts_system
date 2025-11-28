@@ -5,6 +5,10 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Ticket;
 use Carbon\Carbon;
+use App\Models\Categoria;
+use App\Models\Prioridad;
+use App\Models\Usuario;
+
 
 class DashboardController extends Controller
 {
@@ -67,6 +71,10 @@ class DashboardController extends Controller
         // Variación en calificación (diferencia directa)
         $stats['variacion_calificacion'] = round($stats['calificacion_promedio'] - $statsAnteriores['calificacion_promedio'], 1);
 
+        $categorias = Categoria::activas()->get();
+        $prioridades = Prioridad::ordenadoPorNivel()->get();
+        $tecnicos = Usuario::where('rol', 'tecnico')->where('estado', true)->get();
+
         // Tickets recientes (todos los tickets, no solo los últimos 30 días)
         $tickets = (clone $query)
             ->with(['usuario', 'tecnico', 'categoria', 'prioridad'])
@@ -74,7 +82,7 @@ class DashboardController extends Controller
             ->limit(10)
             ->get();
 
-        return view('dashboard', compact('stats', 'tickets'));
+        return view('dashboard', compact('stats', 'tickets', 'categorias', 'prioridades', 'tecnicos'));
     }
 
     /**

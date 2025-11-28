@@ -14,23 +14,20 @@ class EscalamientoService
      */
     public function procesarEscalamientos()
     {
-        // Buscar tickets que necesitan escalamiento
+        // Buscar tickets que llevan mucho tiempo sin resolver
+        // Ejemplo: tickets abiertos por más de 2 horas con prioridad Alta/Urgente
         $tickets = Ticket::whereIn('estado', ['abierto', 'en_proceso'])
-            ->where(function ($q) {
-                // SLA de respuesta vencido sin primera respuesta
-                $q->where('fecha_limite_respuesta', '<', now())
-                    ->whereNull('fecha_primera_respuesta');
+            ->whereHas('prioridad', function($q) {
+                $q->whereIn('nombre', ['Alta', 'Urgente', 'Crítica']);
             })
-            ->orWhere(function ($q) {
-                // SLA de resolución vencido sin resolución
-                $q->where('fecha_limite_resolucion', '<', now())
-                    ->whereNull('fecha_resolucion');
-            })
+            ->where('fecha_apertura', '<', now()->subHours(2))
             ->get();
 
         foreach ($tickets as $ticket) {
             $this->escalarTicket($ticket);
         }
+        
+        Log::info("Procesados " . $tickets->count() . " tickets para escalamiento");
     }
 
     /**
@@ -38,43 +35,26 @@ class EscalamientoService
      */
     public function escalarTicket(Ticket $ticket)
     {
-        // Determinar tipo de escalamiento
-        $tipoEscalamiento = $this->determinarTipoEscalamiento($ticket);
-
-        Log::warning("Escalando ticket {$ticket->numero_ticket} - Razón: {$tipoEscalamiento}");
+        Log::warning("Escalando ticket {$ticket->numero_ticket}");
 
         // Incrementar contador
-        $ticket->increment('intentos_escalamiento');
+        $intentos = ($ticket->intentos_escalamiento ?? 0) + 1;
+        
+        $ticket->update([
+            'intentos_escalamiento' => $intentos
+        ]);
 
         // Si es primer escalamiento, reasignar
-        if ($ticket->intentos_escalamiento == 1) {
-            app(AsignacionAutomaticaService::class)->reasignarTicket($ticket, $tipoEscalamiento);
+        if ($intentos == 1) {
+            app(AsignacionAutomaticaService::class)->reasignarTicket(
+                $ticket, 
+                'Escalamiento por tiempo de espera'
+            );
         }
 
         // Si es segundo o más, crear alarma crítica
-        if ($ticket->intentos_escalamiento >= 2) {
+        if ($intentos >= 2) {
             app(AlarmaService::class)->crearAlarmaEscalamientoCritico($ticket);
         }
-
-        // Calcular próximo escalamiento
-        $ticket->update([
-            'fecha_proximo_escalamiento' => now()->addHours(2)
-        ]);
-    }
-
-    /**
-     * Determinar el tipo de escalamiento
-     */
-    private function determinarTipoEscalamiento(Ticket $ticket)
-    {
-        if (!$ticket->fecha_primera_respuesta && $ticket->fecha_limite_respuesta < now()) {
-            return 'SLA de respuesta vencido';
-        }
-
-        if (!$ticket->fecha_resolucion && $ticket->fecha_limite_resolucion < now()) {
-            return 'SLA de resolución vencido';
-        }
-
-        return 'Escalamiento por tiempo';
     }
 }

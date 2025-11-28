@@ -6,223 +6,286 @@ use Illuminate\Http\Request;
 use App\Models\Ticket;
 use App\Models\Sede;
 use App\Models\Alarma;
-use Illuminate\Support\Facades\DB;
 use App\Models\Usuario;
 use App\Models\MonitoreoLog;
-use PDF;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class ReporteController extends Controller
 {
-    // Dashboard principal con estadísticas
-    public function dashboard()
+    public function index(Request $request)
     {
-        $stats = [
-            'tickets_totales' => Ticket::count(),
-            'tickets_abiertos' => Ticket::where('estado', 'abierto')->count(),
-            'tickets_en_proceso' => Ticket::where('estado', 'en_proceso')->count(),
-            'tickets_cerrados_hoy' => Ticket::where('estado', 'cerrado')
-                ->whereDate('updated_at', today())->count(),
-            
-            'sedes_online' => Sede::where('estado_conexion', 'online')->count(),
-            'sedes_offline' => Sede::where('estado_conexion', 'offline')->count(),
-            'sedes_total' => Sede::count(),
-            
-            'alarmas_criticas' => Alarma::where('nivel', 'critical')
-                ->where('enviada', false)->count(),
-            'alarmas_hoy' => Alarma::whereDate('created_at', today())->count(),
-            
-            'tiempo_promedio_resolucion' => $this->calcularTiempoPromedioResolucion(),
-            'sla_cumplimiento' => $this->calcularPorcentajeSLACumplido()
-        ];
+        $tipoReporte = $request->get('tipo', 'general');
+        $desde = $request->get('desde', now()->subMonth()->format('Y-m-d'));
+        $hasta = $request->get('hasta', now()->format('Y-m-d'));
 
-        $tickets_recientes = Ticket::with(['usuario', 'asignado', 'categoria', 'prioridad'])
-            ->orderBy('created_at', 'desc')
-            ->limit(10)
-            ->get();
+        $data = match ($tipoReporte) {
+            'tickets' => $this->reporteTickets($desde, $hasta),
+            'monitoreo' => $this->reporteMonitoreo($desde, $hasta),
+            'alarmas' => $this->reporteAlarmas($desde, $hasta),
+            'tecnicos' => $this->reporteTecnicos($desde, $hasta),
+            'sla' => $this->reporteSLA($desde, $hasta),
+            default => $this->reporteGeneral($desde, $hasta)
+        };
 
-        $sedes_estado = Sede::select('estado_conexion', \DB::raw('count(*) as total'))
-            ->groupBy('estado_conexion')
-            ->get();
-
-        return view('dashboard', compact('stats', 'tickets_recientes', 'sedes_estado'));
+        return view('reportes.index', compact('tipoReporte', 'desde', 'hasta', 'data'));
     }
 
-    // Reporte de tickets por período
-    public function reporteTickets(Request $request)
+    private function reporteGeneral($desde, $hasta)
     {
-        $desde = $request->input('desde', now()->subMonth());
-        $hasta = $request->input('hasta', now());
+        return [
+            'tickets' => [
+                'total' => Ticket::whereBetween('fecha_apertura', [$desde, $hasta])->count(),
+                'abiertos' => Ticket::where('estado', 'abierto')->count(),
+                'en_proceso' => Ticket::where('estado', 'en_proceso')->count(),
+                'resueltos' => Ticket::where('estado', 'resuelto')
+                    ->whereBetween('fecha_cierre', [$desde, $hasta])->count(),
+                'cerrados' => Ticket::where('estado', 'cerrado')
+                    ->whereBetween('fecha_cierre', [$desde, $hasta])->count(),
+            ],
+            'sedes' => [
+                'total' => Sede::count(),
+                'online' => Sede::where('estado_conexion', 'online')->count(),
+                'offline' => Sede::where('estado_conexion', 'offline')->count(),
+                'degradado' => Sede::where('estado_conexion', 'degradado')->count(),
+            ],
+            'alarmas' => [
+                'total' => Alarma::whereBetween('created_at', [$desde, $hasta])->count(),
+                'criticas' => Alarma::where('nivel', 'critical')
+                    ->where('activa', true)->count(),
+                'advertencias' => Alarma::where('nivel', 'warning')
+                    ->where('activa', true)->count(),
+            ],
+            'tiempos' => [
+                'respuesta_promedio' => $this->calcularTiempoPromedioRespuesta($desde, $hasta),
+                'resolucion_promedio' => $this->calcularTiempoPromedioResolucion($desde, $hasta),
+            ],
+            'sla' => [
+                'cumplimiento' => $this->calcularPorcentajeSLACumplido($desde, $hasta),
+                'tickets_vencidos' => $this->contarTicketsVencidosSLA($desde, $hasta),
+            ]
+        ];
+    }
 
-        $tickets = Ticket::whereBetween('created_at', [$desde, $hasta])
-            ->with(['categoria', 'prioridad', 'asignado'])
+    private function reporteTickets($desde, $hasta)
+    {
+        $tickets = Ticket::whereBetween('fecha_apertura', [$desde, $hasta])
+            ->with(['categoria', 'prioridad', 'tecnico', 'usuario'])
             ->get();
 
-        $resumen = [
+        return [
+            'tickets' => $tickets,
             'total' => $tickets->count(),
             'por_estado' => $tickets->groupBy('estado')->map->count(),
             'por_categoria' => $tickets->groupBy('categoria.nombre')->map->count(),
             'por_prioridad' => $tickets->groupBy('prioridad.nombre')->map->count(),
-            'tiempo_promedio' => $this->calcularTiempoPromedioResolucion($desde, $hasta),
-            'tickets_generados_auto' => $tickets->where('generado_automaticamente', true)->count()
+            'por_origen' => $tickets->groupBy('origen')->map->count(),
+            'automaticos' => $tickets->where('origen', 'automatico')->count(),
+            'manuales' => $tickets->where('origen', 'manual')->count(),
+            'tiempo_respuesta_promedio' => $this->calcularTiempoPromedioRespuesta($desde, $hasta),
+            'tiempo_resolucion_promedio' => $this->calcularTiempoPromedioResolucion($desde, $hasta),
         ];
-
-        return view('reportes.tickets', compact('tickets', 'resumen', 'desde', 'hasta'));
     }
 
-    // Reporte de monitoreo de sedes
-    public function reporteMonitoreo(Request $request)
+    private function reporteMonitoreo($desde, $hasta)
     {
-        $sedeId = $request->input('sede_id');
-        $dias = $request->input('dias', 30);
-
-        $sedes = Sede::with(['monitoreoLogs' => function($query) use ($dias) {
-            $query->where('fecha_chequeo', '>=', now()->subDays($dias));
+        $sedes = Sede::with(['monitoreoLogs' => function ($query) use ($desde, $hasta) {
+            $query->whereBetween('fecha_chequeo', [$desde, $hasta]);
         }])->get();
 
         $estadisticas = [];
         foreach ($sedes as $sede) {
-            $estadisticas[$sede->id] = [
-                'nombre' => $sede->nombre,
-                'uptime' => MonitoreoLog::calcularUptime($sede->id, $dias),
-                'tiempo_respuesta_promedio' => MonitoreoLog::promedioTiempoRespuesta($sede->id, $dias),
-                'total_incidentes' => $sede->monitoreoLogs->where('resultado', 'failed')->count(),
-                'ultimo_chequeo' => $sede->ultima_comprobacion,
-                'estado_actual' => $sede->estado_conexion
+            $logs = $sede->monitoreoLogs;
+            $totalChecks = $logs->count();
+            $successChecks = $logs->where('resultado', 'success')->count();
+
+            $estadisticas[] = [
+                'sede' => $sede,
+                'uptime' => $totalChecks > 0 ? round(($successChecks / $totalChecks) * 100, 2) : 0,
+                'latencia_promedio' => $logs->where('resultado', 'success')->avg('latencia_ms') ?? 0,
+                'total_checks' => $totalChecks,
+                'checks_exitosos' => $successChecks,
+                'checks_fallidos' => $logs->where('resultado', 'fail')->count(),
+                'incidentes' => $logs->where('resultado', 'fail')->count(),
             ];
         }
 
-        return view('reportes.monitoreo', compact('estadisticas', 'dias'));
+        return [
+            'estadisticas' => collect($estadisticas)->sortByDesc('incidentes'),
+            'uptime_general' => collect($estadisticas)->avg('uptime'),
+        ];
     }
 
-    // Reporte de alarmas
-    public function reporteAlarmas(Request $request)
+    private function reporteAlarmas($desde, $hasta)
     {
-        $desde = $request->input('desde', now()->subWeek());
-        $hasta = $request->input('hasta', now());
-
         $alarmas = Alarma::whereBetween('created_at', [$desde, $hasta])
-            ->with('ticket')
+            ->with(['ticket.sede'])
             ->orderBy('created_at', 'desc')
             ->get();
 
-        $resumen = [
+        return [
+            'alarmas' => $alarmas,
             'total' => $alarmas->count(),
             'por_nivel' => $alarmas->groupBy('nivel')->map->count(),
             'por_tipo' => $alarmas->groupBy('tipo_alarma')->map->count(),
-            'enviadas' => $alarmas->where('enviada', true)->count(),
-            'pendientes' => $alarmas->where('enviada', false)->count()
+            'activas' => $alarmas->where('activa', true)->count(),
+            'resueltas' => $alarmas->where('activa', false)->count(),
+            'tiempo_promedio_resolucion' => $this->calcularTiempoPromedioResolucionAlarmas($alarmas),
         ];
-
-        return view('reportes.alarmas', compact('alarmas', 'resumen', 'desde', 'hasta'));
     }
 
-    // Reporte de rendimiento de técnicos
-    public function reporteTecnicos(Request $request)
+    private function reporteTecnicos($desde, $hasta)
     {
-        $desde = $request->input('desde', now()->subMonth());
-        $hasta = $request->input('hasta', now());
-
         $tecnicos = Usuario::where('rol', 'tecnico')
-            ->with(['ticketsAsignados' => function($query) use ($desde, $hasta) {
-                $query->whereBetween('created_at', [$desde, $hasta]);
+            ->where('estado', true)
+            ->with(['ticketsAsignados' => function ($query) use ($desde, $hasta) {
+                $query->whereBetween('fecha_apertura', [$desde, $hasta]);
             }])
             ->get();
 
         $estadisticas = [];
         foreach ($tecnicos as $tecnico) {
             $tickets = $tecnico->ticketsAsignados;
-            
+            $ticketsResueltos = $tickets->where('estado', 'resuelto');
+
             $estadisticas[] = [
-                'tecnico' => $tecnico->nombre . ' ' . $tecnico->apellido,
+                'tecnico' => $tecnico,
                 'tickets_asignados' => $tickets->count(),
-                'tickets_cerrados' => $tickets->where('estado', 'cerrado')->count(),
+                'tickets_resueltos' => $ticketsResueltos->count(),
                 'tickets_pendientes' => $tickets->whereIn('estado', ['abierto', 'en_proceso'])->count(),
-                'tiempo_promedio_resolucion' => $this->calcularTiempoPromedioTecnico($tecnico->id, $desde, $hasta),
-                'tasa_cumplimiento_sla' => $this->calcularTasaSLATecnico($tecnico->id, $desde, $hasta)
+                'tiempo_promedio_resolucion' => $ticketsResueltos->avg('tiempo_resolucion_minutos') ?? 0,
+                'tasa_resolucion' => $tickets->count() > 0
+                    ? round(($ticketsResueltos->count() / $tickets->count()) * 100, 2)
+                    : 0,
+                'sla_cumplimiento' => $this->calcularSLATecnico($tecnico->id, $desde, $hasta),
             ];
         }
 
-        return view('reportes.tecnicos', compact('estadisticas', 'desde', 'hasta'));
+        return [
+            'estadisticas' => collect($estadisticas)->sortByDesc('tickets_asignados'),
+        ];
     }
 
-    // Exportar reporte a PDF
-    public function exportarPDF($tipo, Request $request)
+    private function reporteSLA($desde, $hasta)
     {
-        // Implementar exportación a PDF usando DomPDF o similar
-        // Este es un ejemplo básico
-        
-        $pdf = \PDF::loadView('reportes.' . $tipo . '_pdf', [
-            'datos' => $this->obtenerDatosReporte($tipo, $request)
-        ]);
-
-        return $pdf->download('reporte_' . $tipo . '_' . now()->format('Y-m-d') . '.pdf');
-    }
-
-    // Métodos auxiliares privados
-    private function calcularTiempoPromedioResolucion($desde = null, $hasta = null)
-    {
-        $query = Ticket::where('estado', 'cerrado');
-        
-        if ($desde) $query->where('created_at', '>=', $desde);
-        if ($hasta) $query->where('created_at', '<=', $hasta);
-        
-        $tickets = $query->get();
-        
-        if ($tickets->isEmpty()) return 0;
-        
-        $total_minutos = 0;
-        foreach ($tickets as $ticket) {
-            $total_minutos += $ticket->created_at->diffInMinutes($ticket->updated_at);
-        }
-        
-        return round($total_minutos / $tickets->count() / 60, 2); // Retorna en horas
-    }
-
-    private function calcularPorcentajeSLACumplido()
-    {
-        $total = Ticket::where('estado', 'cerrado')->count();
-        if ($total == 0) return 100;
-        
-        $cumplidos = Ticket::where('estado', 'cerrado')
-            ->whereColumn('fecha_cierre', '<=', 'sla_vencimiento')
-            ->count();
-        
-        return round(($cumplidos / $total) * 100, 2);
-    }
-
-    private function calcularTiempoPromedioTecnico($tecnicoId, $desde, $hasta)
-    {
-        $tickets = Ticket::where('asignado_a', $tecnicoId)
-            ->where('estado', 'cerrado')
-            ->whereBetween('created_at', [$desde, $hasta])
+        $tickets = Ticket::whereBetween('fecha_apertura', [$desde, $hasta])
+            ->with(['prioridad', 'tecnico'])
             ->get();
-            
-        if ($tickets->isEmpty()) return 0;
-        
-        $total_horas = 0;
-        foreach ($tickets as $ticket) {
-            $total_horas += $ticket->created_at->diffInHours($ticket->fecha_cierre);
+
+        $ticketsCerrados = $tickets->whereIn('estado', ['resuelto', 'cerrado']);
+        $ticketsConSLA = $ticketsCerrados->filter(function ($ticket) {
+            return $ticket->sla_vencimiento != null;
+        });
+
+        $ticketsCumplidosSLA = $ticketsConSLA->filter(function ($ticket) {
+            return $ticket->fecha_cierre && $ticket->fecha_cierre <= $ticket->sla_vencimiento;
+        });
+
+        $ticketsVencidosSLA = $ticketsConSLA->filter(function ($ticket) {
+            return $ticket->fecha_cierre && $ticket->fecha_cierre > $ticket->sla_vencimiento;
+        });
+
+        $porPrioridad = [];
+        foreach ($tickets->groupBy('prioridad.nombre') as $prioridad => $ticketsPrioridad) {
+            $conSLA = $ticketsPrioridad->filter(fn($t) => $t->sla_vencimiento != null);
+            $cumplidos = $conSLA->filter(fn($t) => $t->fecha_cierre && $t->fecha_cierre <= $t->sla_vencimiento);
+
+            $porPrioridad[$prioridad] = [
+                'total' => $conSLA->count(),
+                'cumplidos' => $cumplidos->count(),
+                'vencidos' => $conSLA->count() - $cumplidos->count(),
+                'porcentaje' => $conSLA->count() > 0
+                    ? round(($cumplidos->count() / $conSLA->count()) * 100, 2)
+                    : 0
+            ];
         }
-        
-        return round($total_horas / $tickets->count(), 2);
+
+        return [
+            'total_tickets' => $ticketsConSLA->count(),
+            'tickets_cumplidos' => $ticketsCumplidosSLA->count(),
+            'tickets_vencidos' => $ticketsVencidosSLA->count(),
+            'porcentaje_cumplimiento' => $ticketsConSLA->count() > 0
+                ? round(($ticketsCumplidosSLA->count() / $ticketsConSLA->count()) * 100, 2)
+                : 100,
+            'por_prioridad' => $porPrioridad,
+            'tickets_vencidos_detalle' => $ticketsVencidosSLA,
+        ];
     }
 
-    private function calcularTasaSLATecnico($tecnicoId, $desde, $hasta)
+    // Métodos auxiliares
+    private function calcularTiempoPromedioRespuesta($desde, $hasta)
     {
-        $total = Ticket::where('asignado_a', $tecnicoId)
-            ->where('estado', 'cerrado')
-            ->whereBetween('created_at', [$desde, $hasta])
+        $promedio = Ticket::whereBetween('fecha_apertura', [$desde, $hasta])
+            ->whereNotNull('tiempo_respuesta_minutos')
+            ->avg('tiempo_respuesta_minutos');
+
+        return round($promedio ?? 0);
+    }
+
+    private function calcularTiempoPromedioResolucion($desde, $hasta)
+    {
+        $promedio = Ticket::whereBetween('fecha_apertura', [$desde, $hasta])
+            ->whereIn('estado', ['resuelto', 'cerrado'])
+            ->whereNotNull('tiempo_resolucion_minutos')
+            ->avg('tiempo_resolucion_minutos');
+
+        return round($promedio ?? 0);
+    }
+
+    private function calcularPorcentajeSLACumplido($desde, $hasta)
+    {
+        $tickets = Ticket::whereBetween('fecha_apertura', [$desde, $hasta])
+            ->whereIn('estado', ['resuelto', 'cerrado'])
+            ->whereNotNull('sla_vencimiento')
+            ->get();
+
+        if ($tickets->isEmpty()) return 100;
+
+        $cumplidos = $tickets->filter(function ($ticket) {
+            return $ticket->fecha_cierre && $ticket->fecha_cierre <= $ticket->sla_vencimiento;
+        })->count();
+
+        return round(($cumplidos / $tickets->count()) * 100, 2);
+    }
+
+    private function contarTicketsVencidosSLA($desde, $hasta)
+    {
+        return Ticket::whereBetween('fecha_apertura', [$desde, $hasta])
+            ->whereIn('estado', ['resuelto', 'cerrado'])
+            ->whereNotNull('sla_vencimiento')
+            ->whereNotNull('fecha_cierre')
+            ->whereColumn('fecha_cierre', '>', 'sla_vencimiento')
             ->count();
-            
-        if ($total == 0) return 100;
-        
-        $cumplidos = Ticket::where('asignado_a', $tecnicoId)
-            ->where('estado', 'cerrado')
-            ->whereBetween('created_at', [$desde, $hasta])
-            ->whereColumn('fecha_cierre', '<=', 'sla_vencimiento')
-            ->count();
-        
-        return round(($cumplidos / $total) * 100, 2);
+    }
+
+    private function calcularSLATecnico($tecnicoId, $desde, $hasta)
+    {
+        $tickets = Ticket::where('tecnico_id', $tecnicoId)
+            ->whereBetween('fecha_apertura', [$desde, $hasta])
+            ->whereIn('estado', ['resuelto', 'cerrado'])
+            ->whereNotNull('sla_vencimiento')
+            ->get();
+
+        if ($tickets->isEmpty()) return 100;
+
+        $cumplidos = $tickets->filter(function ($ticket) {
+            return $ticket->fecha_cierre && $ticket->fecha_cierre <= $ticket->sla_vencimiento;
+        })->count();
+
+        return round(($cumplidos / $tickets->count()) * 100, 2);
+    }
+
+    private function calcularTiempoPromedioResolucionAlarmas($alarmas)
+    {
+        $alarmasResueltas = $alarmas->where('activa', false);
+
+        if ($alarmasResueltas->isEmpty()) return 0;
+
+        $tiempoTotal = 0;
+        foreach ($alarmasResueltas as $alarma) {
+            $tiempoTotal += $alarma->created_at->diffInMinutes($alarma->updated_at);
+        }
+
+        return round($tiempoTotal / $alarmasResueltas->count());
     }
 }
