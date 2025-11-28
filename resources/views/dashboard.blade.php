@@ -246,7 +246,7 @@
                                 @endif
                                 <td>{{ $ticket->fecha_apertura->format('d/m/Y H:i') }}</td>
                                 <td class="table-actions">
-                                    <a href="{{ route('tickets.show', $ticket->id) }}"
+                                    <a href="{{ route('tickets.index', $ticket->id) }}"
                                         class="btn-outline-primary btn btn-sm" title="Ver">
                                         <i class="bi bi-eye"></i>
                                     </a>

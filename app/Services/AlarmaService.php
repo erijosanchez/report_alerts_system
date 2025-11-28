@@ -61,29 +61,45 @@ class AlarmaService
 
         return $alarma;
     }
-
+    
     /**
-     * Crear alarma por escalamiento
+     * Crear alarma por escalamiento - con niveles dinámicos
      */
     public function crearAlarmaEscalamiento(Ticket $ticket, $razon)
     {
+        // Determinar nivel según intentos de escalamiento
+        $nivel = match ($ticket->intentos_escalamiento) {
+            1 => 'warning',      // Primer escalamiento
+            2 => 'critical',     // Segundo escalamiento
+            default => 'critical' // Tercero o más
+        };
+
+        $emoji = $nivel === 'critical' ? '🚨' : '⚠️';
+
         $alarma = Alarma::create([
             'ticket_id' => $ticket->id,
             'tipo_alarma' => 'escalamiento',
-            'nivel' => 'warning',
-            'titulo' => $this->generarTitulo('escalamiento', 'warning', $ticket),
-            'mensaje' => "⚠️ Escalamiento de Ticket: {$ticket->numero_ticket}",
+            'nivel' => $nivel,
+            'mensaje' => "{$emoji} Escalamiento #{$ticket->intentos_escalamiento}: {$ticket->numero_ticket}",
             'detalle' => "El ticket {$ticket->numero_ticket} ha sido escalado.\n\n" .
                 "📋 Razón: {$razon}\n" .
                 "📝 Título: {$ticket->titulo}\n" .
                 "⚡ Prioridad: {$ticket->prioridad->nombre}\n" .
-                "👤 Nuevo técnico: " . ($ticket->tecnico ? $ticket->tecnico->nombre : 'Sin asignar') . "\n" .
-                "🔄 Intentos de escalamiento: {$ticket->intentos_escalamiento}",
+                "👤 Técnico actual: " . ($ticket->tecnico ? $ticket->tecnico->nombre : 'Sin asignar') . "\n" .
+                "🔄 Escalamientos: {$ticket->intentos_escalamiento}\n" .
+                "⏰ Tiempo abierto: " . $ticket->fecha_apertura->diffForHumans(),
             'activa' => true,
             'enviada' => false
         ]);
 
-        $this->enviarAlarma($alarma, $ticket, 'warning');
+        // Enviar según nivel
+        if ($nivel === 'critical' || $ticket->intentos_escalamiento >= 2) {
+            // Crítico: Email + WhatsApp a admins y técnico
+            $this->enviarAlarma($alarma, $ticket, 'critical');
+        } else {
+            // Primer escalamiento: Solo email y WhatsApp al nuevo técnico
+            $this->enviarAlarma($alarma, $ticket, 'warning_plus');
+        }
 
         return $alarma;
     }

@@ -41,24 +41,24 @@ class NotificacionService
     public function enviarWhatsApp(Alarma $alarma, array $destinatarios)
     {
         try {
-            // Configuración de Twilio
-            $twilioSid = env('TWILIO_ACCOUNT_SID');
-            $twilioToken = env('TWILIO_AUTH_TOKEN');
-            $twilioWhatsApp = env('TWILIO_WHATSAPP_FROM'); // ej: whatsapp:+14155238886
+            $sid = env('TWILIO_ACCOUNT_SID');
+            $token = env('TWILIO_AUTH_TOKEN');
+            $from = env('TWILIO_WHATSAPP_FROM');
 
-            if (!$twilioSid || !$twilioToken || !$twilioWhatsApp) {
+            if (!$sid || !$token || !$from) {
                 Log::warning("Twilio no configurado. Saltando envío de WhatsApp.");
                 return false;
             }
 
-            // Requiere composer require twilio/sdk
             if (!class_exists('\Twilio\Rest\Client')) {
-                Log::warning("Twilio SDK no instalado. Ejecuta: composer require twilio/sdk");
+                Log::warning("Twilio SDK no instalado.");
                 return false;
             }
 
-            $twilio = new \Twilio\Rest\Client($twilioSid, $twilioToken);
-            $mensaje = $alarma->mensaje . "\n\n" . $alarma->detalle;
+            $twilio = new \Twilio\Rest\Client($sid, $token);
+
+            // Mensaje profesional con branding
+            $mensaje = $this->formatearWhatsAppProfesional($alarma);
 
             foreach ($destinatarios as $destinatario) {
                 if (!empty($destinatario['telefono'])) {
@@ -67,7 +67,7 @@ class NotificacionService
                     $twilio->messages->create(
                         $numeroDestino,
                         [
-                            'from' => $twilioWhatsApp,
+                            'from' => $from,
                             'body' => $mensaje
                         ]
                     );
@@ -80,6 +80,33 @@ class NotificacionService
             Log::error("Error enviando WhatsApp: {$e->getMessage()}");
             return false;
         }
+    }
+
+    /**
+     * Formatear mensaje de WhatsApp profesional
+     */
+    private function formatearWhatsAppProfesional(Alarma $alarma)
+    {
+        $emoji = $alarma->nivel === 'critical' ? '🚨' : '⚠️';
+        $nivel = strtoupper($alarma->nivel);
+
+        // IMPORTANTE: Sin espacios al inicio de cada línea
+        return "━━━━━━━━━━━━━━━━━━━━
+            {$emoji} *TRIMAX* {$emoji}
+            _Sistema de Monitoreo Automático_
+            ━━━━━━━━━━━━━━━━━━━━
+
+            *{$alarma->mensaje}*
+
+            {$alarma->detalle}
+
+            ━━━━━━━━━━━━━━━━━━━━
+            📊 *Nivel:* {$nivel}
+            ⏰ *Fecha:* " . $alarma->created_at->format('d/m/Y H:i:s') . "
+            🏢 *Sistema:* Trimax
+            ━━━━━━━━━━━━━━━━━━━━
+
+            _Este es un mensaje automático del sistema de monitoreo._";
     }
 
     /**

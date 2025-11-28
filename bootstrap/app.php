@@ -15,9 +15,6 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         //
     })
-    ->withSchedule(function (Schedule $schedule) {
-        $schedule->call(new MonitorearSedesCommand)->everyFiveMinutes();
-    })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
     })->create();
